@@ -1,0 +1,9 @@
+**/build/
+.gradle/
+local.properties
+*.iml
+.idea/
+.DS_Store
+*.hprof
+build_output.log
+run_build.sh
