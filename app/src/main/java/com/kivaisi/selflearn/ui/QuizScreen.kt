@@ -84,6 +84,10 @@ fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
         )
 
         Box(modifier = Modifier.weight(1f)) {
+            // key() forces Compose to treat each question as a fresh subtree, so
+            // per-question remembered state (selected option, revealed/submitted
+            // flags) never leaks into the next question.
+            key(question.id) {
             QuestionBody(
                 question = question,
                 chapterText = chapter.content,
@@ -117,6 +121,7 @@ fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
                     }
                 }
             )
+            }
         }
     }
 }
