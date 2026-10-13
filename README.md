@@ -60,3 +60,28 @@ APK output: `app/build/outputs/apk/debug/app-debug.apk`
   "Not quite"/"Sort of" resets the streak but doesn't cost a heart.
 - Icons are Compose Material vector icons (Terrain/Science/Favorite/Bolt/etc.), no emoji.
 - Adaptive app icon: a simple purple background with a yellow open-book glyph.
+
+## Session-varied question sampling (v1.2+)
+
+Each chapter's `questions` list is now a POOL, not a fixed script: every underlying
+concept ("dimension") has 2 authored question variants. `QuestionSessionSelector`
+builds each new quiz session by:
+
+1. Grouping the pool by `dimension` -- guarantees every session still covers the
+   same breadth of concepts (one question per dimension), not a random subset.
+2. Picking, per dimension, a variant that was NOT used in the immediately previous
+   session for that chapter (tracked in-memory by `SessionHistory`), falling back to
+   any variant if everything in that dimension has already been seen.
+3. Keeping the Socratic opening question first and sorting the rest by ascending
+   difficulty, preserving the existing "leading question first, then harder" design.
+
+This is deliberately separate from "Review missed questions" on the results screen,
+which intentionally re-shows the exact question + explanation the student got wrong
+(remediation of a specific mistake), not a resampled variant.
+
+`SessionHistory` is in-memory only (resets if the app process is killed) -- swap it
+for DataStore/Room if session history needs to survive app restarts. See the project
+conversation history for the underlying best-practice references (table of
+specifications / Bloom's taxonomy tagging, spaced-repetition exposure control,
+testing-effect research, and automatic question generation surveys) that motivated
+this design.

@@ -103,7 +103,7 @@ private fun ChapterCard(chapter: Chapter, onClick: () -> Unit) {
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${chapter.questions.size} questions * ~${chapter.content.split(" ").size} words",
+                    text = "${chapter.sessionQuestionCount} questions * ~${chapter.content.split(" ").size} words",
                     fontSize = 12.sp,
                     color = Color.Gray
                 )

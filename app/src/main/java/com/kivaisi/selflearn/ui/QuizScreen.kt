@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kivaisi.selflearn.data.ContentRepository
 import com.kivaisi.selflearn.data.Question
+import com.kivaisi.selflearn.data.QuestionSessionSelector
 import com.kivaisi.selflearn.data.QuestionType
 import com.kivaisi.selflearn.model.AnsweredQuestion
 import com.kivaisi.selflearn.model.QuizResult
@@ -38,7 +39,14 @@ private const val STREAK_BONUS_XP = 5
 @Composable
 fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
     val chapter = ContentRepository.findChapter(chapterId) ?: return
-    val questions = chapter.questions
+    // A fresh question set is sampled every time this screen is newly
+    // composed (i.e. every new quiz session for this chapter -- including
+    // "Retry This Chapter" from the results screen), so the next attempt
+    // varies which dimension-variant is asked instead of repeating the
+    // identical five questions. remember(chapter.id) ties this to the
+    // lifetime of this composable instance, not to recomposition within a
+    // session, so hearts/XP/currentIndex changes don't re-roll the set.
+    val questions = remember(chapter.id) { QuestionSessionSelector.selectNewSession(chapter) }
 
     var currentIndex by remember { mutableStateOf(0) }
     var hearts by remember { mutableStateOf(MAX_HEARTS) }
