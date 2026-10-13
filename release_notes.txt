@@ -1,0 +1,26 @@
+SelfLearn Quiz App -- Prototype v1.0
+
+Gamified "read a chapter, then get quizzed" self-learning app prototype
+for English-language content (Swahili planned later).
+
+What's included:
+- Home screen with 2 hardcoded chapters: Geography "Rivers and Erosion"
+  and Science "The Water Cycle" (~350-450 words each).
+- Settable reading timer (default 5 min) before each chapter.
+- Reading screen: Start Quiz unlocks when the timer hits zero OR the
+  student scrolls to the bottom of the text, whichever happens first.
+- Quiz screen: opening Socratic free-text question with model-answer
+  self-assessment (Not quite / Sort of / Got it!), followed by
+  multiple-choice and true/false questions of increasing difficulty
+  with instant feedback. 3 hearts, XP, and streak bonus game mechanics.
+- Results screen with score, XP, best streak, encouraging message, and
+  an expandable "Review missed questions" list.
+
+Build: Kotlin + Jetpack Compose + Material3, min SDK 24, arm64-v8a debug
+build. Built headlessly with gradle 8.9 / JDK 17 / Android SDK 34, no
+Android Studio.
+
+Install: download app-debug.apk on your Android phone and open it from
+your Downloads / browser to sideload (allow "install from unknown
+sources" if prompted). This is a debug prototype build, not signed for
+Play Store distribution.
