@@ -31,6 +31,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.kivaisi.selflearn.data.DictionaryEntry
 import com.kivaisi.selflearn.data.SwahiliDictionaryRepository
+import kotlinx.coroutines.delay
 
 // Navy "offline dictionary" palette -- deliberately distinct from the rest
 // of the app's purple/green/yellow game theme, so this screen reads like a
@@ -59,16 +60,33 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
     val allEntries = remember { SwahiliDictionaryRepository.load(context) }
     var query by remember { mutableStateOf("") }
 
-    val filtered = remember(query, allEntries) {
-        if (query.isBlank()) {
-            allEntries
+    // Debounce: only re-filter ~150ms after the user stops typing, instead
+    // of on every single keystroke. Filtering itself is cheap for ~2,100
+    // entries, but recomputing LazyColumn's key map for a changed result
+    // set on every character (see the `key = { it.headword }` below) adds
+    // up on lower-end devices; debouncing cuts how often that work happens.
+    var debouncedQuery by remember { mutableStateOf("") }
+    LaunchedEffect(query) {
+        delay(150)
+        debouncedQuery = query
+    }
+
+    // With no search term, don't render/measure all ~2,100 entries --
+    // that's wasted work most students never need. Show a capped
+    // alphabetical preview instead and ask them to type to search further.
+    val filtered = remember(debouncedQuery, allEntries) {
+        if (debouncedQuery.isBlank()) {
+            allEntries.take(60)
         } else {
             allEntries.filter {
-                it.headword.contains(query, ignoreCase = true) ||
-                    it.meaning.contains(query, ignoreCase = true)
+                it.headword.contains(debouncedQuery, ignoreCase = true) ||
+                    it.meaning.contains(debouncedQuery, ignoreCase = true)
             }
         }
     }
+    val isBrowsingPreview = debouncedQuery.isBlank()
+
+    val backgroundBrush = remember { Brush.verticalGradient(listOf(DictNavyTop, DictNavyBottom)) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -77,7 +95,7 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(DictNavyTop, DictNavyBottom)))
+                .background(backgroundBrush)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // --- Top bar ---
@@ -143,7 +161,11 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "${filtered.size} result${if (filtered.size == 1) "" else "s"}",
+                    text = if (isBrowsingPreview) {
+                        "Showing first ${filtered.size} of ${allEntries.size} words -- type to search"
+                    } else {
+                        "${filtered.size} result${if (filtered.size == 1) "" else "s"}"
+                    },
                     fontSize = 11.sp,
                     color = Color.White.copy(alpha = 0.55f),
                     modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
@@ -167,7 +189,7 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(filtered, key = { it.headword + it.meaning }) { entry ->
+                        items(filtered, key = { it.headword }) { entry ->
                             DictionaryEntryCard(entry)
                         }
                     }

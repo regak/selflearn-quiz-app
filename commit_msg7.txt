@@ -1,0 +1,20 @@
+Fix: dictionary search lag on every keystroke
+
+Root cause: the LazyColumn's `key = { it.headword + it.meaning }`
+allocated a new concatenated String for every item in the result list
+on every single keystroke (up to ~2,100 allocations per character with
+no query), to rebuild LazyColumn's internal key map. Combined with
+re-filtering on every keystroke with no debounce, this made typing in
+the search box feel laggy, especially on lower-end devices.
+
+Fixes in ui/SwahiliDictionaryDialog.kt:
+- Debounce the search query ~150ms before re-filtering, instead of
+  filtering on every keystroke.
+- Simplify the LazyColumn key to just `it.headword` (already unique
+  after de-duplication) instead of concatenating two strings per item.
+- When there's no search query, stop rendering/measuring all ~2,100
+  entries -- show a capped 60-word alphabetical preview and prompt the
+  student to type to search, instead of paying for the full list by
+  default.
+- Hoist the background gradient Brush with `remember` so it isn't
+  reallocated on every recomposition.
