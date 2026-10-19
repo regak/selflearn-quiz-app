@@ -86,28 +86,34 @@ specifications / Bloom's taxonomy tagging, spaced-repetition exposure control,
 testing-effect research, and automatic question generation surveys) that motivated
 this design.
 
-## Swahili Dictionary (v1.3+)
+## Swahili Dictionary (v1.6+)
 
-A "Swahili Dictionary" lookup is available from a translate-icon button on the Home
-screen (top-right, opens a combined dictionary across all chapters' vocabulary so a
-student can look up a word before even picking a chapter), as well as on the Reading
-screen (top bar) and the Quiz screen (header) for that specific chapter's vocabulary.
-It opens as a dialog overlay rather than a navigation route, so opening/closing it
-does not interrupt the reading countdown timer or reset in-progress quiz state
-(hearts, XP, streak).
+The in-app "Swahili Dictionary" is a **standalone, chapter-independent** reference
+dictionary -- the same way a real pocket Swahili dictionary isn't tied to any one
+lesson. It is backed by a bundled dataset of **2,096 unique Swahili headwords**
+(with English meanings and part-of-speech tags), built by merging and
+de-duplicating the FreeDict project's Swahili-English (2,675 headwords) and
+English-Swahili (1,450 headwords) dictionaries -- see `THIRD_PARTY_NOTICES.md`
+for the full attribution and license (GPLv2+).
 
-Each chapter has its own hardcoded `glossary: List<GlossaryTerm>` in
-`ContentRepository.kt` -- key vocabulary from that chapter's text, each with an
-English definition, an example sentence, and a Swahili translation/explanation.
-The dialog has a live search box that filters by English term, English
-definition, or Swahili text, plus chapter filter pills when showing the merged
-all-chapters view from the Home screen.
+It is reachable identically from the Home screen ("Kamusi" button), the Reading
+screen (top bar), and the Quiz screen (header) -- opening the exact same full
+dictionary every time, not a per-chapter word list. It opens as a dialog
+overlay rather than a navigation route, so opening/closing it does not
+interrupt the reading countdown timer or reset in-progress quiz state (hearts,
+XP, streak).
 
-The dictionary UI (v1.5+) is styled after a standalone offline-dictionary app:
-dark navy background, a red-bordered search bar, and gold-bordered white cards
-per word with "Meaning" / "Example" / "Kiswahili" sections.
+The dictionary data is parsed once from `assets/swahili_dictionary.json`
+(`data/SwahiliDictionaryRepository.kt`) and cached in memory; the search box
+filters the full ~2,100-word list by headword or English meaning as you type.
 
-**Caveat:** the Swahili translations are a best-effort starting point for this
-prototype, not a professionally verified translation. A Swahili-speaking reviewer
-should check `GlossaryTerm.swahili` entries in `ContentRepository.kt` before this
-ships to real students.
+**v1.0-v1.5 note:** earlier releases had a small, hand-authored, per-chapter
+glossary of ~10 words tied to each reading chapter's vocabulary. That was
+replaced in v1.6 with this standalone dictionary after feedback that the
+dictionary should be a general reference tool, not scoped to lesson content.
+
+**Data quality note:** this is real third-party dictionary data (not AI-generated
+or hand-guessed), but it is a community-compiled resource, not an
+institutionally reviewed dictionary like Oxford/Cambridge. Treat it as a solid
+general-purpose reference rather than an authoritative source for formal
+writing.

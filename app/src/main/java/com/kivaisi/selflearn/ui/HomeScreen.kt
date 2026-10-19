@@ -59,8 +59,8 @@ fun HomeScreen(onChapterClick: (String) -> Unit) {
             }
             Spacer(modifier = Modifier.width(12.dp))
             // Prominent "Swahili Dictionary" button, reachable from the home
-            // screen before a chapter is even picked. Opens a combined
-            // dictionary across every chapter's vocabulary.
+            // screen before a chapter is even picked. Opens the standalone,
+            // chapter-independent dictionary (not tied to lesson content).
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -99,13 +99,7 @@ fun HomeScreen(onChapterClick: (String) -> Unit) {
     }
 
     if (showGlossary) {
-        val allTerms = ContentRepository.chapters.flatMap { it.glossary }
-        GlossaryDialog(
-            title = "Swahili Dictionary",
-            subtitle = "All chapters (${allTerms.size} words)",
-            terms = allTerms,
-            onDismiss = { showGlossary = false }
-        )
+        SwahiliDictionaryDialog(onDismiss = { showGlossary = false })
     }
 }
 

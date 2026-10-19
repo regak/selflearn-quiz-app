@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -28,48 +29,45 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.kivaisi.selflearn.data.GlossaryTerm
+import com.kivaisi.selflearn.data.DictionaryEntry
+import com.kivaisi.selflearn.data.SwahiliDictionaryRepository
 
-// Navy "offline dictionary" palette, deliberately distinct from the rest of
-// the app's purple/green/yellow game theme -- this screen is meant to read
-// like a dedicated reference-book tool (modeled on a standalone offline
-// English-dictionary app's look: dark background, bold search bar, gold
-// bordered definition cards).
+// Navy "offline dictionary" palette -- deliberately distinct from the rest
+// of the app's purple/green/yellow game theme, so this screen reads like a
+// dedicated reference-book tool (modeled on a standalone offline-dictionary
+// app look: dark background, bold search bar, gold-bordered cards).
 private val DictNavyTop = Color(0xFF15294F)
 private val DictNavyBottom = Color(0xFF0A1830)
 private val DictSearchBorder = Color(0xFFE5433B)
 private val DictCardBorder = Color(0xFFF0B429)
 
 /**
- * Swahili Dictionary lookup. Shown as a Dialog overlay (not a nav route)
- * so it can be opened from the Home, Reading, or Quiz screens without
- * tearing down that screen's live state (chapter list, countdown timer,
- * hearts/XP/streak).
+ * Standalone Swahili dictionary -- NOT tied to any chapter. Backed by a
+ * bundled ~2,100-headword Swahili<->English dataset (see
+ * data/SwahiliDictionaryRepository and THIRD_PARTY_NOTICES.md), the same
+ * way a student would use a general pocket dictionary regardless of what
+ * they're currently reading. Opened identically from the Home, Reading,
+ * and Quiz screens.
  *
- * [terms] is just a flat list -- callers decide what to show: a single
- * chapter's glossary (Reading/Quiz screens) or every chapter's glossary
- * merged together (Home screen "Kamusi" button). When [terms] spans more
- * than one [GlossaryTerm.chapterTitle], a row of filter chips appears so
- * the student can narrow the list down to one chapter.
+ * Shown as a Dialog overlay (not a nav route) so opening/closing it does
+ * not interrupt the Reading screen's countdown timer or reset in-progress
+ * Quiz state (hearts/XP/streak/current question).
  */
 @Composable
-fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, onDismiss: () -> Unit) {
+fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val allEntries = remember { SwahiliDictionaryRepository.load(context) }
     var query by remember { mutableStateOf("") }
-    var selectedChapter by remember { mutableStateOf<String?>(null) }
 
-    val chapterOptions = remember(terms) {
-        terms.map { it.chapterTitle }.distinct().filter { it.isNotBlank() }
-    }
-
-    val filtered = remember(query, terms, selectedChapter) {
-        terms
-            .filter { selectedChapter == null || it.chapterTitle == selectedChapter }
-            .filter {
-                query.isBlank() ||
-                    it.term.contains(query, ignoreCase = true) ||
-                    it.englishDefinition.contains(query, ignoreCase = true) ||
-                    it.swahili.contains(query, ignoreCase = true)
+    val filtered = remember(query, allEntries) {
+        if (query.isBlank()) {
+            allEntries
+        } else {
+            allEntries.filter {
+                it.headword.contains(query, ignoreCase = true) ||
+                    it.meaning.contains(query, ignoreCase = true)
             }
+        }
     }
 
     Dialog(
@@ -94,7 +92,7 @@ fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, o
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = title,
+                        text = "Swahili Dictionary",
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -103,37 +101,11 @@ fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, o
                     Icon(Icons.Filled.MenuBook, contentDescription = null, tint = Color.White.copy(alpha = 0.8f))
                 }
                 Text(
-                    text = subtitle,
+                    text = "${allEntries.size} Kiswahili words, standalone from any chapter",
                     fontSize = 12.sp,
                     color = Color.White.copy(alpha = 0.65f),
-                    modifier = Modifier.padding(start = 56.dp, bottom = 12.dp)
+                    modifier = Modifier.padding(start = 56.dp, bottom = 14.dp)
                 )
-
-                // --- Chapter filter chips (only shown for the merged, multi-chapter view) ---
-                if (chapterOptions.size > 1) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        FilterPill(
-                            label = "ALL WORDS",
-                            selected = selectedChapter == null,
-                            onClick = { selectedChapter = null }
-                        )
-                        chapterOptions.forEach { chapterTitle ->
-                            FilterPill(
-                                label = chapterTitle.uppercase(),
-                                selected = selectedChapter == chapterTitle,
-                                onClick = { selectedChapter = chapterTitle }
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(14.dp))
-                } else {
-                    Spacer(modifier = Modifier.height(6.dp))
-                }
 
                 // --- Search bar ---
                 Row(
@@ -169,7 +141,13 @@ fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, o
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "${filtered.size} result${if (filtered.size == 1) "" else "s"}",
+                    fontSize = 11.sp,
+                    color = Color.White.copy(alpha = 0.55f),
+                    modifier = Modifier.padding(start = 24.dp, bottom = 8.dp)
+                )
 
                 // --- Results ---
                 if (filtered.isEmpty()) {
@@ -186,11 +164,11 @@ fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, o
                             .fillMaxWidth()
                             .weight(1f)
                             .padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(bottom = 20.dp)
                     ) {
-                        items(filtered) { entry ->
-                            GlossaryEntryCard(entry)
+                        items(filtered, key = { it.headword + it.meaning }) { entry ->
+                            DictionaryEntryCard(entry)
                         }
                     }
                 }
@@ -200,74 +178,49 @@ fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, o
 }
 
 @Composable
-private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (selected) Color.White else Color.White.copy(alpha = 0.12f))
-            .border(
-                width = if (selected) 0.dp else 1.dp,
-                color = Color.White.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(20.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (selected) DictNavyTop else Color.White
-        )
-    }
-}
-
-@Composable
-private fun GlossaryEntryCard(entry: GlossaryTerm) {
+private fun DictionaryEntryCard(entry: DictionaryEntry) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color.White)
             .border(2.dp, DictCardBorder, RoundedCornerShape(16.dp))
-            .padding(vertical = 16.dp, horizontal = 14.dp)
+            .padding(vertical = 14.dp, horizontal = 14.dp)
     ) {
-        Text(
-            text = entry.term,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        GlossarySection(label = "Meaning", body = entry.englishDefinition)
-
-        if (entry.example.isNotBlank()) {
-            Spacer(modifier = Modifier.height(12.dp))
-            GlossarySection(label = "Example", body = entry.example)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = entry.headword,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            if (entry.partOfSpeech.isNotBlank()) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = entry.partOfSpeech,
+                    fontSize = 12.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = Color.Gray
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        GlossarySection(label = "Kiswahili", body = entry.swahili, accent = true)
-    }
-}
-
-@Composable
-private fun GlossarySection(label: String, body: String, accent: Boolean = false) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = label,
-            fontSize = 13.sp,
+            text = "MEANING",
+            fontSize = 12.sp,
             fontStyle = FontStyle.Italic,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            color = if (accent) Color(0xFF1E7A46) else Color.Black,
+            color = Color(0xFF1E7A46),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = body,
+            text = entry.meaning,
             fontSize = 14.sp,
             lineHeight = 19.sp,
             textAlign = TextAlign.Center,
