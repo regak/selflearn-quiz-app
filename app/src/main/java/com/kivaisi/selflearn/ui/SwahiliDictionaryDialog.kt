@@ -67,36 +67,41 @@ private val DictCardBorder = Color(0xFFF0B429)
 @Composable
 fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    val allEntries = remember { SwahiliDictionaryRepository.load(context) }
     var query by remember { mutableStateOf("") }
     var selectedEntry by remember { mutableStateOf<DictionaryEntry?>(null) }
+    var totalCount by remember { mutableStateOf(0) }
+    var filtered by remember { mutableStateOf<List<DictionaryEntry>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Debounce: only re-filter ~150ms after the user stops typing, instead
-    // of on every single keystroke. Filtering itself is cheap for ~16,000
-    // entries, but recomputing LazyColumn's key map for a changed result
-    // set on every character adds up on lower-end devices; debouncing cuts
-    // how often that work happens.
+    // Debounce: only re-query ~150ms after the user stops typing, instead
+    // of on every single keystroke.
     var debouncedQuery by remember { mutableStateOf("") }
     LaunchedEffect(query) {
         delay(150)
         debouncedQuery = query
     }
-
-    // With no search term, don't render/measure all ~16,000 entries --
-    // that's wasted work most students never need. Show a capped
-    // alphabetical preview instead and ask them to type to search further.
-    val filtered = remember(debouncedQuery, allEntries) {
-        if (debouncedQuery.isBlank()) {
-            allEntries.take(60)
-        } else {
-            allEntries.filter {
-                it.headword.contains(debouncedQuery, ignoreCase = true) ||
-                    it.swahiliDefinition.contains(debouncedQuery, ignoreCase = true) ||
-                    it.englishMeaning.contains(debouncedQuery, ignoreCase = true)
-            }
-        }
-    }
     val isBrowsingPreview = debouncedQuery.isBlank()
+
+    // Fetch the total word count once -- used only for the "N of 16,156
+    // words" label, never for loading the whole dictionary into memory.
+    LaunchedEffect(Unit) {
+        totalCount = SwahiliDictionaryRepository.totalCount(context)
+    }
+
+    // Every query (the no-text preview, and every search) runs on
+    // Dispatchers.IO inside the repository and only ever touches the
+    // handful of rows actually needed (<=60 preview rows, <=50 ranked
+    // search results) -- there is no "parse everything into memory first"
+    // step, which is what made opening the dictionary feel slow before.
+    LaunchedEffect(debouncedQuery) {
+        isLoading = true
+        filtered = if (debouncedQuery.isBlank()) {
+            SwahiliDictionaryRepository.browsePreview(context)
+        } else {
+            SwahiliDictionaryRepository.search(context, debouncedQuery)
+        }
+        isLoading = false
+    }
 
     val backgroundBrush = remember { Brush.verticalGradient(listOf(DictNavyTop, DictNavyBottom)) }
 
@@ -125,8 +130,9 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
                 )
             } else {
                 DictionarySearchScreen(
-                    allEntries = allEntries,
+                    totalCount = totalCount,
                     filtered = filtered,
+                    isLoading = isLoading,
                     isBrowsingPreview = isBrowsingPreview,
                     query = query,
                     onQueryChange = { query = it },
@@ -140,8 +146,9 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
 
 @Composable
 private fun DictionarySearchScreen(
-    allEntries: List<DictionaryEntry>,
+    totalCount: Int,
     filtered: List<DictionaryEntry>,
+    isLoading: Boolean,
     isBrowsingPreview: Boolean,
     query: String,
     onQueryChange: (String) -> Unit,
@@ -170,7 +177,7 @@ private fun DictionarySearchScreen(
             Icon(Icons.Filled.MenuBook, contentDescription = null, tint = Color.White.copy(alpha = 0.8f))
         }
         Text(
-            text = "${allEntries.size} Kiswahili words, standalone from any chapter",
+            text = "$totalCount Kiswahili words, standalone from any chapter",
             fontSize = 12.sp,
             color = Color.White.copy(alpha = 0.65f),
             modifier = Modifier.padding(start = 56.dp, bottom = 14.dp)
@@ -212,10 +219,10 @@ private fun DictionarySearchScreen(
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = if (isBrowsingPreview) {
-                "Showing first ${filtered.size} of ${allEntries.size} words -- type to search"
-            } else {
-                "${filtered.size} result${if (filtered.size == 1) "" else "s"} -- tap a word for its full definition"
+            text = when {
+                isLoading -> "Searching..."
+                isBrowsingPreview -> "Showing first ${filtered.size} of $totalCount words -- type to search"
+                else -> "${filtered.size} result${if (filtered.size == 1) "" else "s"} -- tap a word for its full definition"
             },
             fontSize = 11.sp,
             color = Color.White.copy(alpha = 0.55f),
@@ -225,7 +232,11 @@ private fun DictionarySearchScreen(
         // --- Results: plain tappable list, like a real dictionary app's
         // search results -- just the headword + part of speech. Tapping
         // navigates to the full-definition detail screen. ---
-        if (filtered.isEmpty()) {
+        if (isLoading && filtered.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color.White)
+            }
+        } else if (filtered.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     "No matching words found.",

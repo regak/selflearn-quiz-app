@@ -107,10 +107,10 @@ overlay rather than a navigation route, so opening/closing it does not
 interrupt the reading countdown timer or reset in-progress quiz state (hearts,
 XP, streak).
 
-The dictionary data is parsed once from `assets/swahili_dictionary.json`
-(`data/SwahiliDictionaryRepository.kt`) and cached in memory; the search box
-filters the full ~16,000-word list by headword, Swahili definition, or bonus
-English translation as you type, debounced ~150ms to stay responsive.
+The dictionary data is served from a pre-built, pre-indexed **SQLite
+database** bundled as `assets/swahili_dictionary.db`
+(`data/SwahiliDictionaryRepository.kt`), not an in-memory JSON-parsed list
+(see "Dictionary architecture (v2.0)" below).
 
 **Search UX (v1.9+):** search results show a plain tappable list of matching
 headwords only (word + part of speech), modeled on how the Oxford Dictionary
@@ -120,6 +120,31 @@ expanding every result inline. Both screens live inside the same dialog
 overlay; the back arrow on the detail screen returns to the search list
 (preserving your search text), and the back arrow on the search screen
 closes the dictionary.
+
+**Dictionary architecture (v2.0):** v1.6-v1.9 loaded the full dictionary by
+parsing a 2MB JSON file into ~16,000 Kotlin objects synchronously on the UI
+thread the first time the dialog opened, which visibly froze the app for a
+moment, and ranked search matches by raw list order with no relevance
+tiering or result cap, so an exact headword match could get buried under
+loosely-related substring hits inside long definition text. v2.0 replaced
+this with a pre-built, pre-indexed SQLite database
+(`assets/swahili_dictionary.db`):
+- Opening the dictionary never loads the whole dataset into memory --
+  it queries only the rows actually needed (a 60-row preview, or up to 50
+  ranked search results), and every query runs on a background thread
+  (`Dispatchers.IO`) with a loading spinner shown while in flight.
+- The Home screen warms up the database connection in the background as
+  soon as it appears (`SwahiliDictionaryRepository.warmUp`), so by the time
+  a student taps "Kamusi" the connection is usually already open.
+- Search results are now ranked in four priority tiers -- exact headword
+  match, headword starts-with, headword contains, then
+  definition/English-contains last -- so the exact word you typed always
+  sorts to the top, capped at 50 results per query.
+- Plain indexed columns + tiered `LIKE` queries were used instead of
+  SQLite's FTS5 full-text search extension, specifically for guaranteed
+  compatibility down to minSdk 24 (FTS5 availability depends on the
+  device's bundled SQLite build and isn't guaranteed on all Android
+  versions/vendors); at ~16,000 rows this is comfortably fast either way.
 
 **v1.0-v1.5 note:** earlier releases had a small, hand-authored, per-chapter
 glossary of ~10 words tied to each reading chapter's vocabulary. That was

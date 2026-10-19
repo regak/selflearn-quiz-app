@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Terrain
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,11 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kivaisi.selflearn.data.Chapter
 import com.kivaisi.selflearn.data.ContentRepository
+import com.kivaisi.selflearn.data.SwahiliDictionaryRepository
 import com.kivaisi.selflearn.ui.theme.AccentGreen
 import com.kivaisi.selflearn.ui.theme.AccentYellow
 import com.kivaisi.selflearn.ui.theme.PrimaryPurple
@@ -32,6 +35,15 @@ import com.kivaisi.selflearn.ui.theme.PrimaryPurple
 @Composable
 fun HomeScreen(onChapterClick: (String) -> Unit) {
     var showGlossary by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // Warm up the dictionary's SQLite connection (copy-from-assets + open)
+    // in the background as soon as Home appears, so by the time the
+    // student taps "Kamusi" the database is already open and the first
+    // query returns instantly instead of paying that cost on first open.
+    LaunchedEffect(Unit) {
+        SwahiliDictionaryRepository.warmUp(context)
+    }
 
     Column(
         modifier = Modifier
