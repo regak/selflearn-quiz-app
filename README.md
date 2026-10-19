@@ -98,8 +98,14 @@ does not interrupt the reading countdown timer or reset in-progress quiz state
 
 Each chapter has its own hardcoded `glossary: List<GlossaryTerm>` in
 `ContentRepository.kt` -- key vocabulary from that chapter's text, each with an
-English definition and a Swahili translation/explanation. The dialog has a live
-search box that filters by English term, English definition, or Swahili text.
+English definition, an example sentence, and a Swahili translation/explanation.
+The dialog has a live search box that filters by English term, English
+definition, or Swahili text, plus chapter filter pills when showing the merged
+all-chapters view from the Home screen.
+
+The dictionary UI (v1.5+) is styled after a standalone offline-dictionary app:
+dark navy background, a red-bordered search bar, and gold-bordered white cards
+per word with "Meaning" / "Example" / "Kiswahili" sections.
 
 **Caveat:** the Swahili translations are a best-effort starting point for this
 prototype, not a professionally verified translation. A Swahili-speaking reviewer

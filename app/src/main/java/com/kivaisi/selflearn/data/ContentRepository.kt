@@ -64,7 +64,9 @@ data class Chapter(
 data class GlossaryTerm(
     val term: String,
     val englishDefinition: String,
-    val swahili: String
+    val swahili: String,
+    val example: String = "",
+    val chapterTitle: String = ""
 )
 
 object ContentRepository {
@@ -207,54 +209,64 @@ Understanding these erosional processes helps explain many everyday landscape fe
             GlossaryTerm(
                 term = "Erosion",
                 englishDefinition = "The wearing away and removal of rock or soil by moving water, wind, or ice.",
-                swahili = "Mmomonyoko -- kuondolewa kwa udongo au miamba kunakosababishwa na maji, upepo, au barafu inayotembea."
+                swahili = "Mmomonyoko -- kuondolewa kwa udongo au miamba kunakosababishwa na maji, upepo, au barafu inayotembea.",
+                example = "Erosion gradually wore away the riverbank until it finally collapsed into the water."
             ),
             GlossaryTerm(
                 term = "Hydraulic action",
                 englishDefinition = "Erosion caused by the sheer force and pressure of moving water pushing into cracks in rock.",
-                swahili = "Mmomonyoko unaosababishwa na nguvu ya maji yanayosukuma kwenye nyufa za mwamba."
+                swahili = "Mmomonyoko unaosababishwa na nguvu ya maji yanayosukuma kwenye nyufa za mwamba.",
+                example = "The hydraulic action of the fast-flowing water forced open cracks in the cliff face."
             ),
             GlossaryTerm(
                 term = "Abrasion",
                 englishDefinition = "Erosion caused by sand, pebbles, and stones carried by the river scraping and grinding the bed and banks.",
-                swahili = "Mmomonyoko unaosababishwa na mchanga na mawe yanayobebwa na mto kusugua kingo na sakafu ya mto."
+                swahili = "Mmomonyoko unaosababishwa na mchanga na mawe yanayobebwa na mto kusugua kingo na sakafu ya mto.",
+                example = "Abrasion from sand and pebbles scraped deep grooves into the solid rock of the riverbed."
             ),
             GlossaryTerm(
                 term = "Attrition",
                 englishDefinition = "Rocks and sediment in a river colliding with each other, gradually breaking into smaller, rounder pieces.",
-                swahili = "Mawe yanayobebwa na mto kugongana yenyewe kwa yenyewe, hivyo kuvunjika na kuwa vipande vidogo na laini."
+                swahili = "Mawe yanayobebwa na mto kugongana yenyewe kwa yenyewe, hivyo kuvunjika na kuwa vipande vidogo na laini.",
+                example = "Attrition rounded the sharp-edged stones into smooth pebbles after colliding for years downstream."
             ),
             GlossaryTerm(
                 term = "Solution",
                 englishDefinition = "Chemical erosion where slightly acidic river water dissolves soluble rock such as limestone.",
-                swahili = "Mmomonyoko wa kikemikali ambapo maji ya mto yenye tindikali kidogo huyeyusha mwamba kama jiwe chokaa."
+                swahili = "Mmomonyoko wa kikemikali ambapo maji ya mto yenye tindikali kidogo huyeyusha mwamba kama jiwe chokaa.",
+                example = "Solution slowly dissolved the limestone cliff, leaving no scrape marks behind at all."
             ),
             GlossaryTerm(
                 term = "Meander",
                 englishDefinition = "A winding bend in a river's course.",
-                swahili = "Upindo -- sehemu ya mto inayopinda kwa umbo la kona."
+                swahili = "Upindo -- sehemu ya mto inayopinda kwa umbo la kona.",
+                example = "The river's meander grew more pronounced every year as the outer bank kept eroding."
             ),
             GlossaryTerm(
                 term = "Oxbow lake",
                 englishDefinition = "A curved lake formed when a river meander loop is cut off from the main channel.",
-                swahili = "Ziwa lenye umbo la upinde linaloundwa baada ya kipande cha mto kilichopinda kukatwa kutoka kwenye mkondo mkuu."
+                swahili = "Ziwa lenye umbo la upinde linaloundwa baada ya kipande cha mto kilichopinda kukatwa kutoka kwenye mkondo mkuu.",
+                example = "When the meander loop was finally cut off, it left behind a curved oxbow lake."
             ),
             GlossaryTerm(
                 term = "Floodplain",
                 englishDefinition = "The wide, flat valley floor alongside a river that can be covered by water during floods.",
-                swahili = "Eneo tambarare karibu na mto linaloweza kufunikwa na maji wakati wa mafuriko."
+                swahili = "Eneo tambarare karibu na mto linaloweza kufunikwa na maji wakati wa mafuriko.",
+                example = "Farmers planted crops on the fertile floodplain beside the river."
             ),
             GlossaryTerm(
                 term = "Gradient",
                 englishDefinition = "How steep the land is along a river's course.",
-                swahili = "Mteremko -- jinsi ardhi inavyoinama kando ya mkondo wa mto."
+                swahili = "Mteremko -- jinsi ardhi inavyoinama kando ya mkondo wa mto.",
+                example = "The steep gradient near the source caused the river to cut downward very quickly."
             ),
             GlossaryTerm(
                 term = "Sediment",
                 englishDefinition = "Sand, soil, and small rock fragments carried and deposited by a river.",
-                swahili = "Mchanga, udongo, na vipande vidogo vya mawe vinavyobebwa na kuwekwa na mto."
+                swahili = "Mchanga, udongo, na vipande vidogo vya mawe vinavyobebwa na kuwekwa na mto.",
+                example = "The river carried sediment downstream and deposited it on the inside of the bend."
             )
-        )
+        ).map { it.copy(chapterTitle = "Rivers and Erosion") }
     )
 
     val waterCycleChapter = Chapter(
@@ -390,54 +402,64 @@ The water cycle is powered almost entirely by energy from the sun, which drives 
             GlossaryTerm(
                 term = "Evaporation",
                 englishDefinition = "Liquid water turning into invisible water vapor (gas) when heated by the sun.",
-                swahili = "Mvukizo -- maji ya kimiminika kugeuka kuwa mvuke usioonekana yanapopata joto la jua."
+                swahili = "Mvukizo -- maji ya kimiminika kugeuka kuwa mvuke usioonekana yanapopata joto la jua.",
+                example = "Evaporation turned the lake's surface water into invisible vapor on a hot afternoon."
             ),
             GlossaryTerm(
                 term = "Transpiration",
                 englishDefinition = "The release of water vapor into the air from plant leaves.",
-                swahili = "Upumuaji wa mimea -- kutolewa kwa mvuke wa maji angani kupitia majani ya mimea."
+                swahili = "Upumuaji wa mimea -- kutolewa kwa mvuke wa maji angani kupitia majani ya mimea.",
+                example = "Transpiration released water vapor from the leaves of the forest's tall trees."
             ),
             GlossaryTerm(
                 term = "Evapotranspiration",
                 englishDefinition = "The combined term for water vapor entering the air from evaporation and transpiration together.",
-                swahili = "Jumla ya mvukizo kutoka kwenye maji na upumuaji wa mimea kwa pamoja."
+                swahili = "Jumla ya mvukizo kutoka kwenye maji na upumuaji wa mimea kwa pamoja.",
+                example = "Evapotranspiration from the fields and crops added huge amounts of vapor to the air."
             ),
             GlossaryTerm(
                 term = "Condensation",
                 englishDefinition = "Water vapor cooling and changing back into liquid droplets or ice crystals, forming clouds.",
-                swahili = "Ufupishaji -- mvuke wa maji kupoa na kugeuka kuwa matone ya maji au barafu, hivyo kuunda mawingu."
+                swahili = "Ufupishaji -- mvuke wa maji kupoa na kugeuka kuwa matone ya maji au barafu, hivyo kuunda mawingu.",
+                example = "Condensation formed tiny droplets that clustered together into a grey rain cloud."
             ),
             GlossaryTerm(
                 term = "Precipitation",
                 englishDefinition = "Water falling from clouds to the ground as rain, snow, sleet, or hail.",
-                swahili = "Mvua -- maji yanayoanguka kutoka mawinguni kwenda ardhini kama mvua, theluji, au mvua ya mawe."
+                swahili = "Mvua -- maji yanayoanguka kutoka mawinguni kwenda ardhini kama mvua, theluji, au mvua ya mawe.",
+                example = "Precipitation fell as heavy rain once the clouds grew too full to hold the water."
             ),
             GlossaryTerm(
                 term = "Runoff",
                 englishDefinition = "Water flowing across the land surface into streams, rivers, lakes, or oceans.",
-                swahili = "Mtiririko wa maji juu ya ardhi kuelekea kwenye vijito, mito, maziwa, au bahari."
+                swahili = "Mtiririko wa maji juu ya ardhi kuelekea kwenye vijito, mito, maziwa, au bahari.",
+                example = "Runoff carried rainwater across the hillside and into the nearby stream."
             ),
             GlossaryTerm(
                 term = "Infiltration",
                 englishDefinition = "Water soaking into the ground, replenishing underground water supplies.",
-                swahili = "Upenyezaji -- maji kuingia ardhini na kuongeza kiasi cha maji chini ya ardhi."
+                swahili = "Upenyezaji -- maji kuingia ardhini na kuongeza kiasi cha maji chini ya ardhi.",
+                example = "Infiltration let the rain soak deep into the soil to recharge the groundwater below."
             ),
             GlossaryTerm(
                 term = "Groundwater",
                 englishDefinition = "Water stored underground that can feed wells, springs, and rivers.",
-                swahili = "Maji yaliyohifadhiwa chini ya ardhi ambayo yanaweza kulisha visima, chemchemi, na mito."
+                swahili = "Maji yaliyohifadhiwa chini ya ardhi ambayo yanaweza kulisha visima, chemchemi, na mito.",
+                example = "Groundwater pumped from a well kept the village supplied with water during the dry season."
             ),
             GlossaryTerm(
                 term = "Water vapor",
                 englishDefinition = "Water in its gas form, invisible in the air.",
-                swahili = "Mvuke wa maji -- hali ya gesi ya maji, isiyoonekana hewani."
+                swahili = "Mvuke wa maji -- hali ya gesi ya maji, isiyoonekana hewani.",
+                example = "Water vapor rising from the ocean eventually cooled and formed clouds."
             ),
             GlossaryTerm(
                 term = "Closed system",
                 englishDefinition = "A system where nothing is added or removed overall -- matter only changes form and moves around within it.",
-                swahili = "Mfumo uliofungwa -- hali ambapo hakuna kinachoongezwa au kuondolewa; vitu hubadilika tu umbo na kuzunguka ndani ya mfumo huo."
+                swahili = "Mfumo uliofungwa -- hali ambapo hakuna kinachoongezwa au kuondolewa; vitu hubadilika tu umbo na kuzunguka ndani ya mfumo huo.",
+                example = "Because the water cycle is a closed system, no water is ever truly lost from the Earth."
             )
-        )
+        ).map { it.copy(chapterTitle = "The Water Cycle") }
     )
 
     val chapters: List<Chapter> = listOf(riversChapter, waterCycleChapter)
