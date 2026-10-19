@@ -1,0 +1,22 @@
+Dictionary: fix scroll-stuck results making correct matches look missing
+
+Per feedback with screenshots: typing "mo" then continuing to "moja"
+made it look like "moja" wasn't in the dictionary, even though it is.
+
+Root cause: the results LazyColumn didn't reset its scroll position
+when the search query (and therefore the result set) changed. If the
+user had scrolled down while browsing a longer result list (e.g. "mo"
+with many matches), continuing to type kept that old scroll offset --
+so the new, correctly-ranked top result (e.g. the exact match "moja"
+at position #1) sat off-screen above the visible viewport, while the
+user was looking at leftover scroll position landing among unrelated
+lower-tier (definition-contains) matches instead.
+
+Verified directly against the SQLite data that "moja" IS the #1
+result for query "moja" (search() tier logic is correct) -- this was
+purely a scroll-position UI bug, not a search/ranking bug.
+
+Fix: ui/SwahiliDictionaryDialog.kt -- added an explicit
+rememberLazyListState() and a LaunchedEffect(filtered) that calls
+listState.scrollToItem(0) every time the result set changes, so every
+new search always starts showing results from the top.

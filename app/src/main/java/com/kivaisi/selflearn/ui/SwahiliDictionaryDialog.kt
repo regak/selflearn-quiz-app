@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -245,6 +246,16 @@ private fun DictionarySearchScreen(
                 )
             }
         } else {
+            // Scroll back to the top whenever the result SET changes (new
+            // query, not just new characters within the same debounce) --
+            // otherwise a scroll position kept from browsing a previous
+            // query's longer list can leave the new top-ranked match (e.g.
+            // an exact headword hit) scrolled out of view, making it look
+            // "missing" even though it's actually the #1 result.
+            val listState = rememberLazyListState()
+            LaunchedEffect(filtered) {
+                listState.scrollToItem(0)
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -253,7 +264,7 @@ private fun DictionarySearchScreen(
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color.White)
             ) {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                     items(filtered, key = { it.headword }) { entry ->
                         DictionaryListRow(entry = entry, onClick = { onEntryClick(entry) })
                         HorizontalDivider(color = Color(0xFFE6E6E6), thickness = 1.dp)
