@@ -4,25 +4,35 @@ import android.content.Context
 import org.json.JSONArray
 
 /**
- * One headword from the bundled standalone Swahili<->English dictionary.
- * This is real third-party dictionary data (FreeDict project, GPLv2+ --
- * see THIRD_PARTY_NOTICES.md), not content authored for a specific chapter.
+ * One headword from the bundled standalone, MONOLINGUAL Swahili dictionary
+ * -- the Swahili word is defined IN SWAHILI (e.g. "maji" -> "kioevu kisicho
+ * na rangi wala harufu kinachopatikana kiasili"), the same way Oxford or
+ * Cambridge defines English words in English, rather than a translation
+ * dictionary that only maps the word to its English equivalent.
+ *
+ * [englishMeaning] is an OPTIONAL bonus field, only populated when a
+ * separate bilingual source also had that headword -- most entries will
+ * have an empty [englishMeaning] and that's expected, not a bug.
+ *
+ * This is real third-party dictionary data (sw.wiktionary.org, CC BY-SA
+ * 4.0 + GFDL -- see THIRD_PARTY_NOTICES.md), not content authored for a
+ * specific chapter.
  */
 data class DictionaryEntry(
     val headword: String,
     val partOfSpeech: String,
-    val meaning: String
+    val swahiliDefinition: String,
+    val englishMeaning: String
 )
 
 /**
  * Loads the bundled standalone Swahili dictionary from
- * assets/swahili_dictionary.json (~2,100 headwords). This dictionary is
- * intentionally NOT tied to any chapter -- it's a general-purpose
- * reference, like a standalone pocket dictionary, available from the Home,
- * Reading, and Quiz screens alike.
+ * assets/swahili_dictionary.json (~16,000 headwords, each defined in
+ * Swahili). This dictionary is intentionally NOT tied to any chapter --
+ * it's a general-purpose reference, like a standalone pocket dictionary,
+ * available from the Home, Reading, and Quiz screens alike.
  *
- * Parsed once per process and cached in memory; parsing ~95KB of JSON is
- * fast enough to do synchronously on first open without a loading spinner.
+ * Parsed once per process and cached in memory.
  */
 object SwahiliDictionaryRepository {
     @Volatile
@@ -43,7 +53,8 @@ object SwahiliDictionaryRepository {
                     DictionaryEntry(
                         headword = obj.optString("sw"),
                         partOfSpeech = obj.optString("pos"),
-                        meaning = obj.optString("en")
+                        swahiliDefinition = obj.optString("def_sw"),
+                        englishMeaning = obj.optString("en")
                     )
                 )
             }

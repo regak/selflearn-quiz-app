@@ -86,15 +86,19 @@ specifications / Bloom's taxonomy tagging, spaced-repetition exposure control,
 testing-effect research, and automatic question generation surveys) that motivated
 this design.
 
-## Swahili Dictionary (v1.6+)
+## Swahili Dictionary (v1.8+)
 
-The in-app "Swahili Dictionary" is a **standalone, chapter-independent** reference
-dictionary -- the same way a real pocket Swahili dictionary isn't tied to any one
-lesson. It is backed by a bundled dataset of **2,096 unique Swahili headwords**
-(with English meanings and part-of-speech tags), built by merging and
-de-duplicating the FreeDict project's Swahili-English (2,675 headwords) and
-English-Swahili (1,450 headwords) dictionaries -- see `THIRD_PARTY_NOTICES.md`
-for the full attribution and license (GPLv2+).
+The in-app "Swahili Dictionary" is a **standalone, chapter-independent, and
+MONOLINGUAL** reference dictionary -- Swahili words are defined IN SWAHILI
+(the way Oxford/Cambridge define English words in English), not just
+translated to their English equivalent. It is backed by a bundled dataset of
+**16,156 unique Swahili headwords**, extracted from the Swahili-language
+Wiktionary (sw.wiktionary.org). A bonus English translation is attached to
+~1,350 entries where a separate bilingual source also had that word, but
+most entries intentionally only have the Swahili definition. See
+`THIRD_PARTY_NOTICES.md` for the full attribution and license
+(CC BY-SA 4.0 + GFDL for the Wiktionary content; GPLv2+ for the bonus
+English translations).
 
 It is reachable identically from the Home screen ("Kamusi" button), the Reading
 screen (top bar), and the Quiz screen (header) -- opening the exact same full
@@ -105,15 +109,25 @@ XP, streak).
 
 The dictionary data is parsed once from `assets/swahili_dictionary.json`
 (`data/SwahiliDictionaryRepository.kt`) and cached in memory; the search box
-filters the full ~2,100-word list by headword or English meaning as you type.
+filters the full ~16,000-word list by headword, Swahili definition, or bonus
+English translation as you type, debounced ~150ms to stay responsive.
 
 **v1.0-v1.5 note:** earlier releases had a small, hand-authored, per-chapter
 glossary of ~10 words tied to each reading chapter's vocabulary. That was
-replaced in v1.6 with this standalone dictionary after feedback that the
+replaced in v1.6 with a standalone dictionary after feedback that the
 dictionary should be a general reference tool, not scoped to lesson content.
 
-**Data quality note:** this is real third-party dictionary data (not AI-generated
-or hand-guessed), but it is a community-compiled resource, not an
-institutionally reviewed dictionary like Oxford/Cambridge. Treat it as a solid
-general-purpose reference rather than an authoritative source for formal
-writing.
+**v1.6-v1.7 note:** those releases used a bilingual Swahili-English
+*translation* dictionary (FreeDict, 2,096 words) as the primary data source --
+so every word was only defined via its English equivalent, not explained in
+Swahili. v1.8 replaced that with the monolingual Wiktionary-derived dataset
+above, after feedback that a dictionary "like Oxford/Cambridge" should define
+words in their own language, and that the word count was too small.
+
+**Data quality note:** this is real third-party dictionary data (not
+AI-generated or hand-guessed), extracted from a volunteer-edited wiki, not an
+institutionally reviewed dictionary like Oxford/Cambridge. Coverage is strong
+for everyday vocabulary but noticeably thinner for specialized/technical terms
+(e.g. some geography/science vocabulary used in this app's own chapters is
+still not covered). Treat it as a solid general-purpose reference rather than
+an authoritative source for formal writing.

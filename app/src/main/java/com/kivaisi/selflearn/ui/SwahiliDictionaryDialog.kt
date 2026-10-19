@@ -43,12 +43,15 @@ private val DictSearchBorder = Color(0xFFE5433B)
 private val DictCardBorder = Color(0xFFF0B429)
 
 /**
- * Standalone Swahili dictionary -- NOT tied to any chapter. Backed by a
- * bundled ~2,100-headword Swahili<->English dataset (see
- * data/SwahiliDictionaryRepository and THIRD_PARTY_NOTICES.md), the same
- * way a student would use a general pocket dictionary regardless of what
- * they're currently reading. Opened identically from the Home, Reading,
- * and Quiz screens.
+ * Standalone Swahili dictionary -- NOT tied to any chapter, and
+ * MONOLINGUAL: a Swahili word is defined IN SWAHILI (like Oxford/Cambridge
+ * define English words in English), not just translated to its English
+ * equivalent. Backed by a bundled ~16,000-headword dataset extracted from
+ * sw.wiktionary.org (see data/SwahiliDictionaryRepository and
+ * THIRD_PARTY_NOTICES.md). A bonus English translation is shown when a
+ * separate bilingual source also had that word, but it is secondary --
+ * most entries only have the Swahili definition, which is expected.
+ * Opened identically from the Home, Reading, and Quiz screens.
  *
  * Shown as a Dialog overlay (not a nav route) so opening/closing it does
  * not interrupt the Reading screen's countdown timer or reset in-progress
@@ -80,7 +83,8 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
         } else {
             allEntries.filter {
                 it.headword.contains(debouncedQuery, ignoreCase = true) ||
-                    it.meaning.contains(debouncedQuery, ignoreCase = true)
+                    it.swahiliDefinition.contains(debouncedQuery, ignoreCase = true) ||
+                    it.englishMeaning.contains(debouncedQuery, ignoreCase = true)
             }
         }
     }
@@ -141,7 +145,7 @@ fun SwahiliDictionaryDialog(onDismiss: () -> Unit) {
                     Box(modifier = Modifier.weight(1f)) {
                         if (query.isEmpty()) {
                             Text(
-                                "Search a word (English or Kiswahili)...",
+                                "Search a Kiswahili word...",
                                 fontSize = 14.sp,
                                 color = Color.Gray
                             )
@@ -232,7 +236,7 @@ private fun DictionaryEntryCard(entry: DictionaryEntry) {
         }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "MEANING",
+            text = "MAANA (KISWAHILI)",
             fontSize = 12.sp,
             fontStyle = FontStyle.Italic,
             fontWeight = FontWeight.Bold,
@@ -242,12 +246,33 @@ private fun DictionaryEntryCard(entry: DictionaryEntry) {
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = entry.meaning,
+            text = entry.swahiliDefinition,
             fontSize = 14.sp,
             lineHeight = 19.sp,
             textAlign = TextAlign.Center,
             color = Color(0xFF555555),
             modifier = Modifier.fillMaxWidth()
         )
+        if (entry.englishMeaning.isNotBlank()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = "ENGLISH",
+                fontSize = 11.sp,
+                fontStyle = FontStyle.Italic,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = Color.Gray,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = entry.englishMeaning,
+                fontSize = 13.sp,
+                fontStyle = FontStyle.Italic,
+                textAlign = TextAlign.Center,
+                color = Color(0xFF888888),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
