@@ -19,26 +19,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.kivaisi.selflearn.data.Chapter
 import com.kivaisi.selflearn.data.GlossaryTerm
 import com.kivaisi.selflearn.ui.theme.AccentGreen
 import com.kivaisi.selflearn.ui.theme.AccentYellow
 import com.kivaisi.selflearn.ui.theme.PrimaryPurple
 
 /**
- * Swahili Dictionary lookup for a chapter's key vocabulary. Shown as a
- * Dialog overlay (not a nav route) so it can be opened from the Reading
- * screen without tearing down that screen's live countdown timer, and
- * from the Quiz screen without disturbing hearts/XP/streak state.
+ * Swahili Dictionary lookup. Shown as a Dialog overlay (not a nav route)
+ * so it can be opened from the Home, Reading, or Quiz screens without
+ * tearing down that screen's live state (chapter list, countdown timer,
+ * hearts/XP/streak).
+ *
+ * [terms] is just a flat list -- callers decide what to show: a single
+ * chapter's glossary (Reading/Quiz screens) or every chapter's glossary
+ * merged together (Home screen "Dictionary" button), so students can look
+ * up a word before even picking a chapter to read.
  */
 @Composable
-fun GlossaryDialog(chapter: Chapter, onDismiss: () -> Unit) {
+fun GlossaryDialog(title: String, subtitle: String, terms: List<GlossaryTerm>, onDismiss: () -> Unit) {
     var query by remember { mutableStateOf("") }
-    val filtered = remember(query, chapter.id) {
+    val filtered = remember(query, terms) {
         if (query.isBlank()) {
-            chapter.glossary
+            terms
         } else {
-            chapter.glossary.filter {
+            terms.filter {
                 it.term.contains(query, ignoreCase = true) ||
                     it.englishDefinition.contains(query, ignoreCase = true) ||
                     it.swahili.contains(query, ignoreCase = true)
@@ -69,8 +73,8 @@ fun GlossaryDialog(chapter: Chapter, onDismiss: () -> Unit) {
                         Icon(Icons.Filled.Translate, contentDescription = "Dictionary", tint = PrimaryPurple)
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
-                            Text("Swahili Dictionary", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            Text(chapter.title, fontSize = 12.sp, color = Color.Gray)
+                            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(subtitle, fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                     IconButton(onClick = onDismiss) {

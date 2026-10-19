@@ -9,8 +9,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Terrain
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,23 +31,58 @@ import com.kivaisi.selflearn.ui.theme.PrimaryPurple
 
 @Composable
 fun HomeScreen(onChapterClick: (String) -> Unit) {
+    var showGlossary by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp)
     ) {
         Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = "SelfLearn Quiz",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = PrimaryPurple
-        )
-        Text(
-            text = "Read a chapter, then test yourself!",
-            fontSize = 15.sp,
-            color = Color.Gray
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "SelfLearn Quiz",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryPurple
+                )
+                Text(
+                    text = "Read a chapter, then test yourself!",
+                    fontSize = 15.sp,
+                    color = Color.Gray
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            // Prominent "Swahili Dictionary" button, reachable from the home
+            // screen before a chapter is even picked. Opens a combined
+            // dictionary across every chapter's vocabulary.
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(PrimaryPurple.copy(alpha = 0.12f))
+                    .clickable { showGlossary = true }
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Translate,
+                    contentDescription = "Swahili Dictionary",
+                    tint = PrimaryPurple,
+                    modifier = Modifier.size(26.dp)
+                )
+                Text(
+                    text = "Kamusi",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryPurple
+                )
+            }
+        }
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "Choose a chapter",
@@ -56,6 +96,16 @@ fun HomeScreen(onChapterClick: (String) -> Unit) {
             }
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
+    }
+
+    if (showGlossary) {
+        val allTerms = ContentRepository.chapters.flatMap { it.glossary }
+        GlossaryDialog(
+            title = "Swahili Dictionary",
+            subtitle = "All chapters (${allTerms.size} words)",
+            terms = allTerms,
+            onDismiss = { showGlossary = false }
+        )
     }
 }
 

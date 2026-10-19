@@ -157,6 +157,11 @@ fun ReadingScreen(chapterId: String, timerSeconds: Int, onStartQuiz: () -> Unit)
     }
 
     if (showGlossary) {
-        GlossaryDialog(chapter = chapter, onDismiss = { showGlossary = false })
+        GlossaryDialog(
+            title = "Swahili Dictionary",
+            subtitle = chapter.title,
+            terms = chapter.glossary,
+            onDismiss = { showGlossary = false }
+        )
     }
 }

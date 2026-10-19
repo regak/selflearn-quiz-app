@@ -137,7 +137,12 @@ fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
     }
 
     if (showGlossary) {
-        GlossaryDialog(chapter = chapter, onDismiss = { showGlossary = false })
+        GlossaryDialog(
+            title = "Swahili Dictionary",
+            subtitle = chapter.title,
+            terms = chapter.glossary,
+            onDismiss = { showGlossary = false }
+        )
     }
 }
 

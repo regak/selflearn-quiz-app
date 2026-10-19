@@ -88,11 +88,13 @@ this design.
 
 ## Swahili Dictionary (v1.3+)
 
-A "Swahili Dictionary" lookup is available from a translate-icon button on both the
-Reading screen (top bar) and the Quiz screen (header, next to the streak badge). It
-opens as a dialog overlay rather than a navigation route, so opening/closing it does
-not interrupt the reading countdown timer or reset in-progress quiz state (hearts,
-XP, streak).
+A "Swahili Dictionary" lookup is available from a translate-icon button on the Home
+screen (top-right, opens a combined dictionary across all chapters' vocabulary so a
+student can look up a word before even picking a chapter), as well as on the Reading
+screen (top bar) and the Quiz screen (header) for that specific chapter's vocabulary.
+It opens as a dialog overlay rather than a navigation route, so opening/closing it
+does not interrupt the reading countdown timer or reset in-progress quiz state
+(hearts, XP, streak).
 
 Each chapter has its own hardcoded `glossary: List<GlossaryTerm>` in
 `ContentRepository.kt` -- key vocabulary from that chapter's text, each with an
