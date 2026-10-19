@@ -1,0 +1,21 @@
+Dictionary: Oxford-style search-list + detail screen flow
+
+Per feedback/reference screenshots (Oxford Dictionary app): search
+results should be a plain tappable list of matching words only;
+tapping a word should navigate to a dedicated screen with the full
+definition and other details, instead of showing every result as a
+fully expanded card inline in the list.
+
+ui/SwahiliDictionaryDialog.kt:
+- Split into DictionarySearchScreen (search bar + plain word list,
+  each row just headword + part of speech + chevron) and
+  DictionaryDetailScreen (full Swahili definition + bonus English
+  translation, shown after tapping a result).
+- Added local `selectedEntry` state inside the Dialog so both screens
+  share the same overlay without a real nav route -- the Dialog's
+  onDismissRequest now routes back to the search list first (if a
+  detail screen is open) before actually closing the dictionary, so
+  the system back gesture/button behaves the same way.
+- Search text/scroll position in the list is preserved when returning
+  from the detail screen, since it's the same composable, not a fresh
+  dialog instance.

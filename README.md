@@ -112,6 +112,15 @@ The dictionary data is parsed once from `assets/swahili_dictionary.json`
 filters the full ~16,000-word list by headword, Swahili definition, or bonus
 English translation as you type, debounced ~150ms to stay responsive.
 
+**Search UX (v1.9+):** search results show a plain tappable list of matching
+headwords only (word + part of speech), modeled on how the Oxford Dictionary
+app's search works. Tapping a word navigates to a dedicated detail screen
+with the full Swahili definition and bonus English translation, rather than
+expanding every result inline. Both screens live inside the same dialog
+overlay; the back arrow on the detail screen returns to the search list
+(preserving your search text), and the back arrow on the search screen
+closes the dictionary.
+
 **v1.0-v1.5 note:** earlier releases had a small, hand-authored, per-chapter
 glossary of ~10 words tied to each reading chapter's vocabulary. That was
 replaced in v1.6 with a standalone dictionary after feedback that the
