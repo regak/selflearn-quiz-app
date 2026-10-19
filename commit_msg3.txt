@@ -1,0 +1,23 @@
+Feature: Swahili dictionary for chapter vocabulary
+
+Add a per-chapter English-Swahili glossary and an in-app dictionary
+lookup so students more comfortable in Swahili can look up unfamiliar
+English vocabulary used in the chapter text without leaving the
+reading or quiz screen.
+
+- data/ContentRepository.kt: new GlossaryTerm(term, englishDefinition,
+  swahili) data class; Chapter gains a `glossary` list. Authored 10
+  key-vocabulary entries for each chapter (Rivers and Erosion; The
+  Water Cycle).
+- ui/GlossaryDialog.kt (new): "Swahili Dictionary" shown as a Dialog
+  overlay (not a nav route) with a live search box filtering by
+  English term, English definition, or Swahili text. Overlay keeps the
+  underlying screen's composition (and its state/timers) alive.
+- ui/ReadingScreen.kt: translate-icon button in the top bar opens the
+  glossary without affecting the countdown timer.
+- ui/QuizScreen.kt: translate-icon button in the quiz header opens the
+  glossary without affecting hearts/XP/streak/current question state.
+
+Caveat noted in README: the Swahili translations are a best-effort
+starting point, not a professionally verified translation -- flagged
+for review by a Swahili speaker before real student use.

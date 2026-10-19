@@ -7,6 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ fun ReadingScreen(chapterId: String, timerSeconds: Int, onStartQuiz: () -> Unit)
     val chapter = ContentRepository.findChapter(chapterId) ?: return
     var secondsLeft by remember { mutableStateOf(timerSeconds) }
     val scrollState = rememberScrollState()
+    var showGlossary by remember { mutableStateOf(false) }
 
     LaunchedEffect(chapterId) {
         while (secondsLeft > 0) {
@@ -69,6 +71,14 @@ fun ReadingScreen(chapterId: String, timerSeconds: Int, onStartQuiz: () -> Unit)
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { showGlossary = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.Translate,
+                        contentDescription = "Swahili Dictionary",
+                        tint = PrimaryPurple
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = if (unlocked) Icons.Filled.CheckCircle else Icons.Filled.Timer,
                     contentDescription = "Timer",
@@ -144,5 +154,9 @@ fun ReadingScreen(chapterId: String, timerSeconds: Int, onStartQuiz: () -> Unit)
             }
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+
+    if (showGlossary) {
+        GlossaryDialog(chapter = chapter, onDismiss = { showGlossary = false })
     }
 }

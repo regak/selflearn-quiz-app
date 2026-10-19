@@ -85,3 +85,21 @@ conversation history for the underlying best-practice references (table of
 specifications / Bloom's taxonomy tagging, spaced-repetition exposure control,
 testing-effect research, and automatic question generation surveys) that motivated
 this design.
+
+## Swahili Dictionary (v1.3+)
+
+A "Swahili Dictionary" lookup is available from a translate-icon button on both the
+Reading screen (top bar) and the Quiz screen (header, next to the streak badge). It
+opens as a dialog overlay rather than a navigation route, so opening/closing it does
+not interrupt the reading countdown timer or reset in-progress quiz state (hearts,
+XP, streak).
+
+Each chapter has its own hardcoded `glossary: List<GlossaryTerm>` in
+`ContentRepository.kt` -- key vocabulary from that chapter's text, each with an
+English definition and a Swahili translation/explanation. The dialog has a live
+search box that filters by English term, English definition, or Swahili text.
+
+**Caveat:** the Swahili translations are a best-effort starting point for this
+prototype, not a professionally verified translation. A Swahili-speaking reviewer
+should check `GlossaryTerm.swahili` entries in `ContentRepository.kt` before this
+ships to real students.

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -55,6 +56,7 @@ fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
     var bestStreak by remember { mutableStateOf(0) }
     val answered = remember { mutableStateListOf<AnsweredQuestion>() }
     var outOfHearts by remember { mutableStateOf(false) }
+    var showGlossary by remember { mutableStateOf(false) }
 
     fun finish() {
         QuizResultHolder.lastResult = QuizResult(
@@ -88,7 +90,8 @@ fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
             streak = streak,
             progress = currentIndex.toFloat() / questions.size.toFloat(),
             questionNumber = currentIndex + 1,
-            totalQuestions = questions.size
+            totalQuestions = questions.size,
+            onDictionaryClick = { showGlossary = true }
         )
 
         Box(modifier = Modifier.weight(1f)) {
@@ -132,6 +135,10 @@ fun QuizScreen(chapterId: String, onFinished: () -> Unit, onRetry: () -> Unit) {
             }
         }
     }
+
+    if (showGlossary) {
+        GlossaryDialog(chapter = chapter, onDismiss = { showGlossary = false })
+    }
 }
 
 @Composable
@@ -141,7 +148,8 @@ private fun QuizHeader(
     streak: Int,
     progress: Float,
     questionNumber: Int,
-    totalQuestions: Int
+    totalQuestions: Int,
+    onDictionaryClick: () -> Unit
 ) {
     Column(modifier = Modifier.padding(20.dp)) {
         Row(
@@ -174,6 +182,10 @@ private fun QuizHeader(
                     ) {
                         Text("${streak}x streak", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                IconButton(onClick = onDictionaryClick, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Filled.Translate, contentDescription = "Swahili Dictionary", tint = PrimaryPurple)
                 }
             }
         }

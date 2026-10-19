@@ -43,12 +43,29 @@ data class Chapter(
     val emojiLabel: String, // short subject tag, not used as an icon per design (icons are Compose vector icons)
     val content: String,
     val questions: List<Question>, // full pool; see QuestionSessionSelector for per-session sampling
+    val glossary: List<GlossaryTerm> = emptyList(),
     val defaultTimerSeconds: Int = 300
 ) {
     /** Number of questions a single quiz session draws from this chapter's pool. */
     val sessionQuestionCount: Int
         get() = questions.map { it.dimension }.distinct().size
 }
+
+/**
+ * One English-Swahili glossary entry for a key vocabulary word used in a
+ * chapter's reading text. Shown in the in-app "Swahili Dictionary" so a
+ * student who is more comfortable in Swahili can look up an unfamiliar
+ * English term without leaving the reading/quiz screen.
+ *
+ * Swahili translations below are a best-effort starting point for this
+ * prototype, not a verified professional translation -- a Swahili-speaking
+ * reviewer should check them before this ships to real students.
+ */
+data class GlossaryTerm(
+    val term: String,
+    val englishDefinition: String,
+    val swahili: String
+)
 
 object ContentRepository {
 
@@ -185,6 +202,58 @@ Understanding these erosional processes helps explain many everyday landscape fe
                 explanation = "True -- as meanders become more sinuous from uneven erosion and deposition, a loop can eventually be cut off entirely from the main flow, leaving a curved oxbow lake behind.",
                 difficulty = 3
             )
+        ),
+        glossary = listOf(
+            GlossaryTerm(
+                term = "Erosion",
+                englishDefinition = "The wearing away and removal of rock or soil by moving water, wind, or ice.",
+                swahili = "Mmomonyoko -- kuondolewa kwa udongo au miamba kunakosababishwa na maji, upepo, au barafu inayotembea."
+            ),
+            GlossaryTerm(
+                term = "Hydraulic action",
+                englishDefinition = "Erosion caused by the sheer force and pressure of moving water pushing into cracks in rock.",
+                swahili = "Mmomonyoko unaosababishwa na nguvu ya maji yanayosukuma kwenye nyufa za mwamba."
+            ),
+            GlossaryTerm(
+                term = "Abrasion",
+                englishDefinition = "Erosion caused by sand, pebbles, and stones carried by the river scraping and grinding the bed and banks.",
+                swahili = "Mmomonyoko unaosababishwa na mchanga na mawe yanayobebwa na mto kusugua kingo na sakafu ya mto."
+            ),
+            GlossaryTerm(
+                term = "Attrition",
+                englishDefinition = "Rocks and sediment in a river colliding with each other, gradually breaking into smaller, rounder pieces.",
+                swahili = "Mawe yanayobebwa na mto kugongana yenyewe kwa yenyewe, hivyo kuvunjika na kuwa vipande vidogo na laini."
+            ),
+            GlossaryTerm(
+                term = "Solution",
+                englishDefinition = "Chemical erosion where slightly acidic river water dissolves soluble rock such as limestone.",
+                swahili = "Mmomonyoko wa kikemikali ambapo maji ya mto yenye tindikali kidogo huyeyusha mwamba kama jiwe chokaa."
+            ),
+            GlossaryTerm(
+                term = "Meander",
+                englishDefinition = "A winding bend in a river's course.",
+                swahili = "Upindo -- sehemu ya mto inayopinda kwa umbo la kona."
+            ),
+            GlossaryTerm(
+                term = "Oxbow lake",
+                englishDefinition = "A curved lake formed when a river meander loop is cut off from the main channel.",
+                swahili = "Ziwa lenye umbo la upinde linaloundwa baada ya kipande cha mto kilichopinda kukatwa kutoka kwenye mkondo mkuu."
+            ),
+            GlossaryTerm(
+                term = "Floodplain",
+                englishDefinition = "The wide, flat valley floor alongside a river that can be covered by water during floods.",
+                swahili = "Eneo tambarare karibu na mto linaloweza kufunikwa na maji wakati wa mafuriko."
+            ),
+            GlossaryTerm(
+                term = "Gradient",
+                englishDefinition = "How steep the land is along a river's course.",
+                swahili = "Mteremko -- jinsi ardhi inavyoinama kando ya mkondo wa mto."
+            ),
+            GlossaryTerm(
+                term = "Sediment",
+                englishDefinition = "Sand, soil, and small rock fragments carried and deposited by a river.",
+                swahili = "Mchanga, udongo, na vipande vidogo vya mawe vinavyobebwa na kuwekwa na mto."
+            )
         )
     )
 
@@ -315,6 +384,58 @@ The water cycle is powered almost entirely by energy from the sun, which drives 
                 correctIndex = 1,
                 explanation = "False -- the water cycle is a closed system. The total amount of water on Earth stays essentially constant; it only changes form and location as it moves through evaporation, condensation, precipitation, and runoff/infiltration.",
                 difficulty = 3
+            )
+        ),
+        glossary = listOf(
+            GlossaryTerm(
+                term = "Evaporation",
+                englishDefinition = "Liquid water turning into invisible water vapor (gas) when heated by the sun.",
+                swahili = "Mvukizo -- maji ya kimiminika kugeuka kuwa mvuke usioonekana yanapopata joto la jua."
+            ),
+            GlossaryTerm(
+                term = "Transpiration",
+                englishDefinition = "The release of water vapor into the air from plant leaves.",
+                swahili = "Upumuaji wa mimea -- kutolewa kwa mvuke wa maji angani kupitia majani ya mimea."
+            ),
+            GlossaryTerm(
+                term = "Evapotranspiration",
+                englishDefinition = "The combined term for water vapor entering the air from evaporation and transpiration together.",
+                swahili = "Jumla ya mvukizo kutoka kwenye maji na upumuaji wa mimea kwa pamoja."
+            ),
+            GlossaryTerm(
+                term = "Condensation",
+                englishDefinition = "Water vapor cooling and changing back into liquid droplets or ice crystals, forming clouds.",
+                swahili = "Ufupishaji -- mvuke wa maji kupoa na kugeuka kuwa matone ya maji au barafu, hivyo kuunda mawingu."
+            ),
+            GlossaryTerm(
+                term = "Precipitation",
+                englishDefinition = "Water falling from clouds to the ground as rain, snow, sleet, or hail.",
+                swahili = "Mvua -- maji yanayoanguka kutoka mawinguni kwenda ardhini kama mvua, theluji, au mvua ya mawe."
+            ),
+            GlossaryTerm(
+                term = "Runoff",
+                englishDefinition = "Water flowing across the land surface into streams, rivers, lakes, or oceans.",
+                swahili = "Mtiririko wa maji juu ya ardhi kuelekea kwenye vijito, mito, maziwa, au bahari."
+            ),
+            GlossaryTerm(
+                term = "Infiltration",
+                englishDefinition = "Water soaking into the ground, replenishing underground water supplies.",
+                swahili = "Upenyezaji -- maji kuingia ardhini na kuongeza kiasi cha maji chini ya ardhi."
+            ),
+            GlossaryTerm(
+                term = "Groundwater",
+                englishDefinition = "Water stored underground that can feed wells, springs, and rivers.",
+                swahili = "Maji yaliyohifadhiwa chini ya ardhi ambayo yanaweza kulisha visima, chemchemi, na mito."
+            ),
+            GlossaryTerm(
+                term = "Water vapor",
+                englishDefinition = "Water in its gas form, invisible in the air.",
+                swahili = "Mvuke wa maji -- hali ya gesi ya maji, isiyoonekana hewani."
+            ),
+            GlossaryTerm(
+                term = "Closed system",
+                englishDefinition = "A system where nothing is added or removed overall -- matter only changes form and moves around within it.",
+                swahili = "Mfumo uliofungwa -- hali ambapo hakuna kinachoongezwa au kuondolewa; vitu hubadilika tu umbo na kuzunguka ndani ya mfumo huo."
             )
         )
     )
