@@ -1,0 +1,43 @@
+Dictionary: example sentences for all 16,156 words (option B)
+
+Per feedback: add example sentences for every dictionary word, using
+generated examples where no real source exists, plus a CSV/Excel
+backup of the data.
+
+Data pipeline (one-off Python, no live AI API calls):
+- Real examples (2,349 entries, 14.5%): matched Tatoeba's open Swahili
+  sentence corpus (4,583 sentences, CC BY 2.0 FR) against headwords by
+  whole-word match, plus 86 entries with their own native '#:'
+  quotation line already in the sw.wiktionary.org source.
+- Generated examples (13,807 entries, 85.5%): no free Swahili
+  example-sentence corpus covers the full dictionary, so the rest get
+  a template-filled sentence built from the headword + its own
+  definition (4 rotating templates, all grammatically safe since they
+  quote the headword rather than conjugating around it).
+- Added `example`, `example_is_generated`, `example_source` columns to
+  the SQLite dataset; bumped PRAGMA user_version to 2.
+
+data/SwahiliDictionaryRepository.kt:
+- DictionaryEntry gained `example: String` and
+  `isExampleGenerated: Boolean`.
+- IMPORTANT fix: added proper schema-version checking
+  (REQUIRED_SCHEMA_VERSION) to AssetDbOpenHelper.ensureCopied() --
+  previously it only checked "does a file already exist", which would
+  have kept serving a stale pre-v2.2 on-device copy forever to anyone
+  who already installed v2.0/v2.1, crashing on the new columns. Now it
+  checks the copied file's own PRAGMA user_version and re-copies from
+  assets if it's out of date.
+
+ui/SwahiliDictionaryDialog.kt: Detail screen now shows an "MFANO"
+(example) section between the Swahili definition and the bonus English
+translation, labeled "SENTENSI HALISI" (real sentence) or "SENTENSI YA
+MFANO -- IMETUNGWA" (generated example) with a visible disclaimer line
+for generated ones, so they're never mistaken for authentic usage.
+
+Backup: swahili_dictionary_backup.csv / .xlsx added to the repo root --
+word, part of speech, Swahili definition, example, example-is-generated
+flag, example source, bonus English translation, for all 16,156
+entries.
+
+THIRD_PARTY_NOTICES.md / README.md updated with the Tatoeba CC BY 2.0
+FR attribution and the real-vs-generated example methodology.

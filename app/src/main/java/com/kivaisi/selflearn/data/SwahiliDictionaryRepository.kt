@@ -19,15 +19,25 @@ import java.io.File
  * separate bilingual source also had that headword -- most entries will
  * have an empty [englishMeaning] and that's expected, not a bug.
  *
+ * [example] is ALWAYS populated (100% coverage), but [isExampleGenerated]
+ * tells you whether it's REAL usage pulled from a real source (Tatoeba's
+ * open sentence corpus or sw.wiktionary.org's own quotation lines -- about
+ * 14.5% of entries) or a TEMPLATE-GENERATED placeholder sentence built from
+ * the word and its definition (the other ~85.5%, since no free Swahili
+ * example-sentence corpus covers the full dictionary). The UI must label
+ * generated examples as such -- never present them as authentic usage.
+ *
  * This is real third-party dictionary data (sw.wiktionary.org, CC BY-SA
- * 4.0 + GFDL -- see THIRD_PARTY_NOTICES.md), not content authored for a
- * specific chapter.
+ * 4.0 + GFDL; Tatoeba, CC BY 2.0 FR -- see THIRD_PARTY_NOTICES.md), not
+ * content authored for a specific chapter.
  */
 data class DictionaryEntry(
     val headword: String,
     val partOfSpeech: String,
     val swahiliDefinition: String,
-    val englishMeaning: String
+    val englishMeaning: String,
+    val example: String,
+    val isExampleGenerated: Boolean
 )
 
 /**
@@ -57,11 +67,22 @@ data class DictionaryEntry(
  * on the device's bundled SQLite build and isn't guaranteed on all Android
  * versions/vendors, while plain B-tree indexes are universally supported
  * and, at ~16,000 rows, comfortably fast either way.)
+ *
+ * SCHEMA VERSIONING: the bundled DB's `PRAGMA user_version` is bumped
+ * whenever a released APK's schema changes (added example columns in
+ * schema version 2). [AssetDbOpenHelper.ensureCopied] checks the
+ * already-installed copy's user_version against
+ * [REQUIRED_SCHEMA_VERSION] and re-copies from assets if it's stale --
+ * otherwise a user upgrading from an older release would keep their old
+ * on-device copy forever (first-run-only copy logic) and crash querying
+ * columns that don't exist in it yet.
  */
 object SwahiliDictionaryRepository {
     private const val DB_ASSET_NAME = "swahili_dictionary.db"
+    private const val REQUIRED_SCHEMA_VERSION = 2
     private const val DEFAULT_LIMIT = 50
     private const val PREVIEW_LIMIT = 60
+    private const val COLUMNS = "headword, pos, def_sw, en, example, example_is_generated"
 
     @Volatile
     private var db: SQLiteDatabase? = null
@@ -97,7 +118,7 @@ object SwahiliDictionaryRepository {
         withContext(Dispatchers.IO) {
             val database = getDb(context)
             database.rawQuery(
-                "SELECT headword, pos, def_sw, en FROM entries ORDER BY headword_lower LIMIT ?",
+                "SELECT $COLUMNS FROM entries ORDER BY headword_lower LIMIT ?",
                 arrayOf(limit.toString())
             ).use { it.toEntries() }
         }
@@ -130,23 +151,23 @@ object SwahiliDictionaryRepository {
 
             // Tier 0: exact headword match.
             runTier(
-                "SELECT headword, pos, def_sw, en FROM entries WHERE headword_lower = ? ORDER BY headword_lower",
+                "SELECT $COLUMNS FROM entries WHERE headword_lower = ? ORDER BY headword_lower",
                 arrayOf(q)
             )
             // Tier 1: headword starts with the query.
             runTier(
-                "SELECT headword, pos, def_sw, en FROM entries WHERE headword_lower LIKE ? ORDER BY headword_lower",
+                "SELECT $COLUMNS FROM entries WHERE headword_lower LIKE ? ORDER BY headword_lower",
                 arrayOf("$q%")
             )
             // Tier 2: headword contains the query anywhere.
             runTier(
-                "SELECT headword, pos, def_sw, en FROM entries WHERE headword_lower LIKE ? ORDER BY headword_lower",
+                "SELECT $COLUMNS FROM entries WHERE headword_lower LIKE ? ORDER BY headword_lower",
                 arrayOf("%$q%")
             )
             // Tier 3 (lowest priority): query only found in the definition
             // or bonus English translation, not the headword itself.
             runTier(
-                "SELECT headword, pos, def_sw, en FROM entries WHERE def_sw LIKE ? OR en LIKE ? ORDER BY headword_lower",
+                "SELECT $COLUMNS FROM entries WHERE def_sw LIKE ? OR en LIKE ? ORDER BY headword_lower",
                 arrayOf("%$q%", "%$q%")
             )
 
@@ -163,7 +184,9 @@ object SwahiliDictionaryRepository {
         headword = getString(0),
         partOfSpeech = getString(1) ?: "",
         swahiliDefinition = getString(2) ?: "",
-        englishMeaning = getString(3) ?: ""
+        englishMeaning = getString(3) ?: "",
+        example = getString(4) ?: "",
+        isExampleGenerated = getInt(5) != 0
     )
 
     private fun getDb(context: Context): SQLiteDatabase {
@@ -178,21 +201,23 @@ object SwahiliDictionaryRepository {
     }
 
     /** Copies the pre-built, pre-indexed dictionary database out of
-     * assets/ into the app's private database directory on first run
-     * (SQLite cannot open a database file directly from inside an APK's
-     * compressed assets), then opens it read-only on every later call. */
+     * assets/ into the app's private database directory on first run (or
+     * after an app update that bumped the schema -- see
+     * [REQUIRED_SCHEMA_VERSION]), then opens it read-only on every later
+     * call. SQLite cannot open a database file directly from inside an
+     * APK's compressed assets, so a real filesystem copy is required. */
     private class AssetDbOpenHelper(private val context: Context) :
         SQLiteOpenHelper(context, DB_ASSET_NAME, null, 1) {
 
         override fun onCreate(db: SQLiteDatabase) {
             // Not used -- the database file is pre-built and copied in
-            // getReadableDatabase()/getWritableDatabase() below.
+            // getReadableDatabase() below.
         }
 
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-            // No schema migrations yet -- bump DB_ASSET_NAME's bundled
-            // content instead of the version, since it's a fresh copy-in
-            // each time the asset file itself changes.
+            // Not used -- see ensureCopied(), which re-copies a stale
+            // on-device file based on the bundled DB's own
+            // PRAGMA user_version instead of this framework callback.
         }
 
         override fun getReadableDatabase(): SQLiteDatabase {
@@ -206,7 +231,7 @@ object SwahiliDictionaryRepository {
 
         private fun ensureCopied() {
             val destFile = context.getDatabasePath(DB_ASSET_NAME)
-            if (destFile.exists() && destFile.length() > 0) return
+            if (destFile.exists() && destFile.length() > 0 && isUpToDate(destFile)) return
             destFile.parentFile?.mkdirs()
             val tempFile = File(destFile.parentFile, "$DB_ASSET_NAME.tmp")
             context.assets.open(DB_ASSET_NAME).use { input ->
@@ -214,7 +239,23 @@ object SwahiliDictionaryRepository {
                     input.copyTo(output)
                 }
             }
+            // delete() first -- renameTo() can silently fail to replace an
+            // existing destination file on some filesystems/API levels.
+            destFile.delete()
             tempFile.renameTo(destFile)
+        }
+
+        /** True if the already-copied on-device file's schema version is
+         * current, so we don't re-copy a multi-megabyte asset on every
+         * single app launch -- only when it's actually stale (e.g. left
+         * over from an older release that bundled a different schema) or
+         * unreadable/corrupted. */
+        private fun isUpToDate(destFile: File): Boolean = try {
+            SQLiteDatabase.openDatabase(destFile.path, null, SQLiteDatabase.OPEN_READONLY).use { existing ->
+                existing.version >= REQUIRED_SCHEMA_VERSION
+            }
+        } catch (e: Exception) {
+            false
         }
     }
 }

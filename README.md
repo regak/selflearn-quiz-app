@@ -100,6 +100,23 @@ most entries intentionally only have the Swahili definition. See
 (CC BY-SA 4.0 + GFDL for the Wiktionary content; GPLv2+ for the bonus
 English translations).
 
+**Example sentences (v2.2+):** every entry also has an example sentence,
+flagged as either real or auto-generated (see "Example sentences" in
+`THIRD_PARTY_NOTICES.md` for full detail):
+- **2,349 entries (14.5%)** have a REAL example sentence, pulled from the
+  Tatoeba open sentence corpus (CC BY 2.0 FR) or sw.wiktionary.org's own
+  quotation lines.
+- **13,807 entries (85.5%)** have a TEMPLATE-GENERATED placeholder sentence
+  (e.g. `Neno "{headword}" linamaanisha: {definition}.`), built from the
+  word and its own definition, since no free Swahili example-sentence
+  corpus covers the full dictionary. These are clearly labeled in the
+  Detail screen as auto-generated, with a small disclaimer, and must never
+  be mistaken for authentic native usage.
+
+A full backup of the word/definition/example/translation data is kept as
+`swahili_dictionary_backup.csv` and `.xlsx` in the repository root, for
+reference or re-import outside the app.
+
 It is reachable identically from the Home screen ("Kamusi" button), the Reading
 screen (top bar), and the Quiz screen (header) -- opening the exact same full
 dictionary every time, not a per-chapter word list. It opens as a dialog

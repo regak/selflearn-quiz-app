@@ -372,6 +372,29 @@ private fun DictionaryDetailScreen(entry: DictionaryEntry, onBack: () -> Unit) {
 
                 DictionarySection(label = "MAANA (KISWAHILI)", body = entry.swahiliDefinition, accentColor = Color(0xFF1E7A46))
 
+                Spacer(modifier = Modifier.height(18.dp))
+                DictionarySection(
+                    label = if (entry.isExampleGenerated) {
+                        "MFANO (SENTENSI YA MFANO -- IMETUNGWA)"
+                    } else {
+                        "MFANO (SENTENSI HALISI)"
+                    },
+                    body = entry.example,
+                    accentColor = if (entry.isExampleGenerated) Color(0xFFB07A17) else Color(0xFF1E7A46),
+                    italicBody = true
+                )
+                if (entry.isExampleGenerated) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "This example sentence was auto-generated to illustrate the word, not pulled from real usage.",
+                        fontSize = 10.sp,
+                        fontStyle = FontStyle.Italic,
+                        textAlign = TextAlign.Center,
+                        color = Color.Gray,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 if (entry.englishMeaning.isNotBlank()) {
                     Spacer(modifier = Modifier.height(18.dp))
                     DictionarySection(label = "ENGLISH", body = entry.englishMeaning, accentColor = Color.Gray, italicBody = true)
