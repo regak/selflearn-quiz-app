@@ -1,5 +1,6 @@
 package com.kivaisi.selflearn.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -25,13 +28,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -280,46 +288,46 @@ private fun DictionarySearchScreen(
     }
 }
 
+/**
+ * One search-result row. Words that have a bundled illustration get a small
+ * rounded thumbnail of it on the left (a familiar "contact photo" pattern);
+ * the ~16,000 rows without one keep the plain text layout, so the list's
+ * rhythm isn't broken by empty placeholder slots.
+ */
 @Composable
 private fun DictionaryListRow(entry: DictionaryEntry, onClick: () -> Unit) {
+    val imageResId = rememberIllustrationResId(entry.imageResName)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = if (imageResId != 0) 10.dp else 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (imageResId != 0) {
+            Image(
+                painter = painterResource(id = imageResId),
+                contentDescription = null, // decorative: the headword text beside it is the label
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.White)
+                    .border(1.dp, Color(0xFFE6E6E6), RoundedCornerShape(10.dp))
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+        }
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = entry.headword,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = DictNavyTop
+            )
+            val pos = swahiliPartOfSpeech(entry.partOfSpeech)
+            if (pos.isNotBlank()) {
                 Text(
-                    text = entry.headword,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF15294F)
-                )
-                // Small, non-intrusive signal that this word has a bundled
-                // illustration (like a "has photo" badge in a contacts
-                // list) -- most rows won't show this, so it doesn't change
-                // row height/alignment for the vast majority of entries.
-                if (entry.imageResName.isNotBlank()) {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Box(
-                        modifier = Modifier.size(14.dp)
-                            .clip(androidx.compose.foundation.shape.CircleShape)
-                            .background(Color(0xFFB07A17)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "🖼",
-                            fontSize = 10.sp,
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-            if (entry.partOfSpeech.isNotBlank()) {
-                Text(
-                    text = entry.partOfSpeech,
+                    text = pos,
                     fontSize = 11.sp,
                     fontStyle = FontStyle.Italic,
                     color = Color.Gray
@@ -335,28 +343,21 @@ private fun DictionaryListRow(entry: DictionaryEntry, onClick: () -> Unit) {
 }
 
 /**
- * Full-definition detail screen for one dictionary entry -- navigated to
- * from tapping a search result row, the way Oxford Dictionary's app opens
- * a dedicated page per word instead of expanding inline.
+ * Full-definition page for one word (navigated to from a search row, the way
+ * Oxford's app opens a dedicated page per word).
+ *
+ * Layout, top to bottom, inside one white card that always fills the screen:
+ *  1. Illustration header (only for the ~20 illustrated words).
+ *  2. Headword, left-aligned, with pills for the Swahili part of speech and the
+ *     bonus English meaning (each pill only when that data exists).
+ *  3. "Maana" block: the definition, left-aligned body text.
+ *  4. "Mfano" block: the example as a quote with an accent bar, the headword
+ *     bolded inside it, and a small Halisi/Imetungwa tag for real vs generated.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DictionaryDetailScreen(entry: DictionaryEntry, onBack: () -> Unit) {
-    val context = LocalContext.current
-    // Data-driven image reference: the DB stores a drawable resource NAME
-    // (e.g. "word_baba") rather than a compile-time R.drawable id, since
-    // the mapping of "which 20 words have a hand-drawn illustration" lives
-    // in data, not code. Resolved once per entry via getIdentifier() and
-    // cached with remember -- this reflection-based lookup is more costly
-    // than a direct R.drawable reference, but it only ever runs once per
-    // Detail-screen visit (never in a search/scroll hot path), so the cost
-    // is negligible here.
-    val imageResId = remember(entry.imageResName) {
-        if (entry.imageResName.isBlank()) {
-            0
-        } else {
-            context.resources.getIdentifier(entry.imageResName, "drawable", context.packageName)
-        }
-    }
+    val imageResId = rememberIllustrationResId(entry.imageResName)
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -377,108 +378,246 @@ private fun DictionaryDetailScreen(entry: DictionaryEntry, onBack: () -> Unit) {
             )
         }
 
-        Column(
+        // BoxWithConstraints gives the visible height so the card can be at
+        // least that tall (no empty navy band under short entries) while
+        // still scrolling for long ones.
+        BoxWithConstraints(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+                .weight(1f)
         ) {
+            val minCardHeight = maxHeight - 16.dp
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-                    .border(2.dp, DictCardBorder, RoundedCornerShape(20.dp))
-                    .padding(vertical = 22.dp, horizontal = 20.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
             ) {
-                Text(
-                    text = entry.headword,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (entry.partOfSpeech.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = entry.partOfSpeech,
-                        fontSize = 14.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                if (imageResId != 0) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Image(
-                        painter = painterResource(id = imageResId),
-                        contentDescription = "Illustration of ${entry.headword}",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                    )
-                }
-                Spacer(modifier = Modifier.height(20.dp))
+                Surface(
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 24.dp, bottomEnd = 24.dp),
+                    color = Color.White,
+                    shadowElevation = 6.dp,
+                    border = BorderStroke(1.dp, DictCardBorder.copy(alpha = 0.55f)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = minCardHeight)
+                ) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        if (imageResId != 0) {
+                            Image(
+                                painter = painterResource(id = imageResId),
+                                contentDescription = "Illustration of ${entry.headword}",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(230.dp)
+                                    .padding(start = 20.dp, end = 20.dp, top = 20.dp)
+                            )
+                        }
 
-                DictionarySection(label = "MAANA (KISWAHILI)", body = entry.swahiliDefinition, accentColor = Color(0xFF1E7A46))
+                        Column(
+                            modifier = Modifier.padding(
+                                start = 22.dp,
+                                end = 22.dp,
+                                top = if (imageResId != 0) 12.dp else 26.dp,
+                                bottom = 28.dp
+                            )
+                        ) {
+                            Text(
+                                text = entry.headword,
+                                fontSize = 32.sp,
+                                lineHeight = 38.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DictNavyTop
+                            )
 
-                Spacer(modifier = Modifier.height(18.dp))
-                DictionarySection(
-                    label = if (entry.isExampleGenerated) {
-                        "MFANO (SENTENSI YA MFANO -- IMETUNGWA)"
-                    } else {
-                        "MFANO (SENTENSI HALISI)"
-                    },
-                    body = entry.example,
-                    accentColor = if (entry.isExampleGenerated) Color(0xFFB07A17) else Color(0xFF1E7A46),
-                    italicBody = true
-                )
-                if (entry.isExampleGenerated) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "This example sentence was auto-generated to illustrate the word, not pulled from real usage.",
-                        fontSize = 10.sp,
-                        fontStyle = FontStyle.Italic,
-                        textAlign = TextAlign.Center,
-                        color = Color.Gray,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
+                            val pos = swahiliPartOfSpeech(entry.partOfSpeech)
+                            if (pos.isNotBlank() || entry.englishMeaning.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    if (pos.isNotBlank()) {
+                                        InfoPill(text = pos, background = DictNavyTop.copy(alpha = 0.08f), textColor = DictNavyTop)
+                                    }
+                                    if (entry.englishMeaning.isNotBlank()) {
+                                        InfoPill(
+                                            text = entry.englishMeaning,
+                                            prefix = "EN",
+                                            background = DictCardBorder.copy(alpha = 0.18f),
+                                            textColor = Color(0xFF6B4A06)
+                                        )
+                                    }
+                                }
+                            }
 
-                if (entry.englishMeaning.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(18.dp))
-                    DictionarySection(label = "ENGLISH", body = entry.englishMeaning, accentColor = Color.Gray, italicBody = true)
+                            Spacer(modifier = Modifier.height(22.dp))
+                            HorizontalDivider(color = Color(0xFFEFEAE0), thickness = 1.dp)
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            SectionHeader(icon = Icons.Filled.MenuBook, title = "Maana", accent = MeaningGreen)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = entry.swahiliDefinition,
+                                fontSize = 17.sp,
+                                lineHeight = 26.sp,
+                                color = Color(0xFF2B2B2B)
+                            )
+
+                            Spacer(modifier = Modifier.height(26.dp))
+
+                            val exampleAccent = if (entry.isExampleGenerated) GeneratedAmber else MeaningGreen
+                            SectionHeader(
+                                icon = Icons.Filled.FormatQuote,
+                                title = "Mfano",
+                                accent = exampleAccent,
+                                tag = if (entry.isExampleGenerated) "Imetungwa" else "Halisi"
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(4.dp)
+                                        .fillMaxHeight()
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(exampleAccent)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = highlightWord(entry.example, entry.headword),
+                                    fontSize = 16.sp,
+                                    lineHeight = 24.sp,
+                                    fontStyle = FontStyle.Italic,
+                                    color = Color(0xFF3A3A3A),
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+                            if (entry.isExampleGenerated) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = "This example was auto-generated to show the word in use, not taken from real text.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+private val MeaningGreen = Color(0xFF1E7A46)
+private val GeneratedAmber = Color(0xFFB07A17)
+
+@Composable
+private fun SectionHeader(icon: ImageVector, title: String, accent: Color, tag: String? = null) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(accent.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = icon, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = title,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = DictNavyTop
+        )
+        if (tag != null) {
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = tag,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = accent,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(accent.copy(alpha = 0.12f))
+                    .padding(horizontal = 10.dp, vertical = 3.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun DictionarySection(label: String, body: String, accentColor: Color, italicBody: Boolean = false) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            fontStyle = FontStyle.Italic,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = accentColor,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = body,
-            fontSize = 16.sp,
-            lineHeight = 23.sp,
-            fontStyle = if (italicBody) FontStyle.Italic else FontStyle.Normal,
-            textAlign = TextAlign.Center,
-            color = Color(0xFF444444),
-            modifier = Modifier.fillMaxWidth()
-        )
+private fun InfoPill(text: String, background: Color, textColor: Color, prefix: String? = null) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(background)
+            .padding(horizontal = 12.dp, vertical = 5.dp)
+    ) {
+        if (prefix != null) {
+            Text(
+                text = prefix,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor.copy(alpha = 0.7f)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+        }
+        Text(text = text, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = textColor)
+    }
+}
+
+/**
+ * Resolves a data-driven illustration name (e.g. "word_baba") to a drawable
+ * id, or 0 when there is none. The name lives in the dictionary DB rather
+ * than as a compile-time R.drawable reference, so getIdentifier() is needed;
+ * it only runs for the ~20 illustrated words and is cached per name.
+ */
+@Composable
+private fun rememberIllustrationResId(name: String): Int {
+    val context = LocalContext.current
+    return remember(name) {
+        if (name.isBlank()) 0
+        else context.resources.getIdentifier(name, "drawable", context.packageName)
+    }
+}
+
+/** Short tags from the bilingual source mapped to the Swahili grammar terms students learn. */
+private fun swahiliPartOfSpeech(raw: String): String = when (raw.trim().lowercase()) {
+    "" -> ""
+    "n" -> "nomino"
+    "v" -> "kitenzi"
+    "adj" -> "kivumishi"
+    "adv" -> "kielezi"
+    "pron" -> "kiwakilishi"
+    "num" -> "namba"
+    "prep" -> "kihusishi"
+    "conj" -> "kiunganishi"
+    "interj" -> "kihisishi"
+    "cop" -> "kishirikishi"
+    "prt" -> "kijineno"
+    "expr" -> "msemo"
+    else -> raw
+}
+
+/** Bolds every case-insensitive occurrence of the headword inside the example sentence. */
+private fun highlightWord(sentence: String, headword: String): AnnotatedString {
+    val needle = headword.trim().trimStart('-')
+    if (needle.length < 2) return AnnotatedString(sentence)
+    val regex = Regex(Regex.escape(needle), RegexOption.IGNORE_CASE)
+    return buildAnnotatedString {
+        var last = 0
+        for (m in regex.findAll(sentence)) {
+            append(sentence.substring(last, m.range.first))
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Normal, color = DictNavyTop)) {
+                append(m.value)
+            }
+            last = m.range.last + 1
+        }
+        append(sentence.substring(last))
     }
 }

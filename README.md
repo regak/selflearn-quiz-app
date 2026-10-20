@@ -132,6 +132,13 @@ has an example sentence, flagged as either real or auto-generated (see
   uzazi, afya ya wanyama, agaa, agano jipya). Search results show a small
   🖼 badge; the Detail screen displays the full illustration above the
   definition.
+- **v2.6 note:** word page redesign. Illustrations re-cropped without the
+  sheet's number badges, frames and label remnants, and shown as the card
+  header. Headword is left-aligned with Swahili part-of-speech ("nomino",
+  "kitenzi", ...) and English pills. Meaning and example are separate
+  blocks with icons; the example is a quote with the headword in bold and
+  a "Halisi"/"Imetungwa" tag. The card fills the screen. Search rows for
+  illustrated words show a thumbnail instead of the badge.
 
 A full backup of the word/definition/example/translation data is kept as
 `swahili_dictionary_backup.csv` and `.xlsx` in the repository root, for
