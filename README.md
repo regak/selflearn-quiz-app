@@ -100,18 +100,32 @@ most entries intentionally only have the Swahili definition. See
 (CC BY-SA 4.0 + GFDL for the Wiktionary content; GPLv2+ for the bonus
 English translations).
 
-**Example sentences (v2.2+):** every entry also has an example sentence,
-flagged as either real or auto-generated (see "Example sentences" in
-`THIRD_PARTY_NOTICES.md` for full detail):
-- **2,349 entries (14.5%)** have a REAL example sentence, pulled from the
-  Tatoeba open sentence corpus (CC BY 2.0 FR) or sw.wiktionary.org's own
-  quotation lines.
-- **13,807 entries (85.5%)** have a TEMPLATE-GENERATED placeholder sentence
-  (e.g. `Neno "{headword}" linamaanisha: {definition}.`), built from the
-  word and its own definition, since no free Swahili example-sentence
-  corpus covers the full dictionary. These are clearly labeled in the
-  Detail screen as auto-generated, with a small disclaimer, and must never
-  be mistaken for authentic native usage.
+**Example sentences (v2.2+, revised in v2.3 and v2.4):** every entry also
+has an example sentence, flagged as either real or auto-generated (see
+"Example sentences" in `THIRD_PARTY_NOTICES.md` for full detail):
+- **9,676 entries (59.9%)** have a REAL example sentence, pulled from the
+  Tatoeba open sentence corpus (CC BY 2.0 FR), sw.wiktionary.org's own
+  quotation lines, or Swahili Wikipedia (sw.wikipedia.org, CC BY-SA 4.0),
+  length- and topic-screened for a student audience.
+- **6,480 entries (40.1%)** have a TEMPLATE-GENERATED SCENARIO sentence
+  (e.g. `Mwalimu alitumia neno "{headword}" wakati wa somo la Kiswahili
+  leo.` -- "The teacher used the word '{headword}' during today's
+  Swahili lesson") placing the word in a plausible classroom/reading
+  context, since no free Swahili example-sentence corpus covers every
+  headword. Clearly labeled in the Detail screen as auto-generated, with
+  a small disclaimer, and must never be mistaken for authentic native
+  usage.
+- **v2.2 note:** the first generated-fallback version just restated the
+  definition as a sentence (e.g. "Neno X linamaanisha: ..."), which
+  wasn't a real usage example at all -- v2.3 replaced that wording with
+  the scenario-style templates above, and separately added Swahili
+  Wikipedia as a third real-sentence source.
+- **v2.4 note:** a post-build QA pass caught 138 spurious "real" matches
+  from Wikipedia -- 5 were bound-morpheme headwords (e.g. "-kubwa") that
+  can never appear as standalone words in real text, so the match was an
+  accidental punctuation artifact; 134 still had leftover MediaWiki
+  markup fragments. Both were reverted to the generated fallback instead
+  of being shown as real sentences.
 
 A full backup of the word/definition/example/translation data is kept as
 `swahili_dictionary_backup.csv` and `.xlsx` in the repository root, for

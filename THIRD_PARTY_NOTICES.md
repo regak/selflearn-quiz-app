@@ -36,24 +36,47 @@ https://freedict.org/.
 
 ## Example sentences
 
-Every entry has an `example` field, but it comes from one of two very
-different places, flagged by `example_is_generated` (shown in-app as
-"SENTENSI HALISI" / real sentence, vs "SENTENSI YA MFANO -- IMETUNGWA" /
-auto-generated example):
+Every entry has an `example` field, flagged by `example_is_generated`
+(shown in-app as "SENTENSI HALISI" / real sentence, vs "SENTENSI YA MFANO
+-- IMETUNGWA" / generated example):
 
-- **Real usage (2,349 entries, 14.5%):** pulled from the **Tatoeba**
-  open sentence corpus (4,583 Swahili sentences, CC BY 2.0 FR,
-  https://tatoeba.org/, dump via https://downloads.tatoeba.org/) by
-  matching whole words against each headword, plus 86 entries that had
-  their own native example/quotation line (`#:`) directly in the
-  sw.wiktionary.org source (same license as the definitions above).
-- **Generated placeholders (13,807 entries, 85.5%):** no free,
-  dictionary-scale Swahili example-sentence corpus exists, so the
-  remaining entries get a template-filled sentence built from the
-  headword and its own definition (e.g. `Neno "{headword}" linamaanisha:
-  {definition}.`), produced by a one-off Python script, NOT by a live AI
-  model call. These are clearly labeled in the app as auto-generated and
-  must never be presented as authentic native usage.
+- **Real usage (9,676 entries, 59.9%):** pulled from three real sources,
+  by matching whole words (and, for multi-word headwords, substring
+  matches) against each headword:
+  - **Tatoeba** open sentence corpus (4,583 Swahili sentences,
+    CC BY 2.0 FR, https://tatoeba.org/, dump via
+    https://downloads.tatoeba.org/).
+  - **86 entries** with their own native example/quotation line (`#:`)
+    directly in the sw.wiktionary.org source (same license as the
+    definitions above).
+  - **Swahili Wikipedia** (sw.wikipedia.org, 131,547 articles, CC BY-SA
+    4.0, dump via https://dumps.wikimedia.org/swwiki/), screened for
+    length (preferring shorter, simpler sentences) and a basic
+    sensitive-topic keyword filter before being used, since
+    encyclopedia text skews long/formal and isn't pre-vetted for a
+    student audience.
+  - **Schema version 4 cleanup:** a post-build QA pass found 138 of the
+    Wikipedia-matched examples were spurious -- 5 were bound-morpheme
+    headwords (e.g. "-kubwa", a grammatical root that's never a
+    standalone word, so any text "match" for it is an accidental
+    hyphen/punctuation artifact, not real usage), and 134 still had
+    leftover MediaWiki markup fragments (stray `* *` bullet points,
+    `]]` image-caption remnants) that slipped through the plain-text
+    extraction. Both categories were reverted to the generated fallback
+    below instead of being shown as real sentences.
+- **Generated placeholders (6,480 entries, 40.1%):** no free,
+  dictionary-scale Swahili example-sentence corpus covers the full
+  16,156-word list, so the remaining entries get a template-filled
+  SCENARIO sentence (e.g. `Mwalimu alitumia neno "{headword}" wakati wa
+  somo la Kiswahili leo.` -- "The teacher used the word '{headword}'
+  during today's Swahili lesson") that places the word in a plausible
+  classroom/reading/conversation context, produced by a one-off Python
+  script, NOT by a live AI model call. An earlier version of this
+  fallback (schema version 2) just restated the definition back as a
+  sentence (e.g. "Neno X linamaanisha: ..."), which wasn't a real usage
+  example at all -- schema version 3 replaced that wording. These
+  generated sentences are still clearly labeled in the app and must
+  never be presented as authentic native usage.
 
 ## License
 
@@ -62,39 +85,45 @@ auto-generated example):
   **Creative Commons Attribution-ShareAlike 4.0** (CC BY-SA 4.0) and the
   **GNU Free Documentation License** (GFDL), per the Wikimedia
   Foundation's standard terms for all Wiktionary editions.
-- **Tatoeba content** (2,263 of the real example sentences) is
+- **Wikipedia content** (the majority of the real example sentences) is
+  also dual-licensed under **CC BY-SA 4.0** and **GFDL**, per the same
+  Wikimedia Foundation terms (sw.wikipedia.org is the Swahili edition of
+  the same Wikimedia project as sw.wiktionary.org).
+- **Tatoeba content** (a smaller share of the real example sentences) is
   distributed under **Creative Commons Attribution 2.0 France**
   (CC BY 2.0 FR), per https://tatoeba.org/en/downloads.
 - **FreeDict content** (the bonus English translations) is distributed
   under the **GNU General Public License, version 2.0 or later** (GPLv2+).
   The full license text is in `THIRD_PARTY_DICTIONARY_LICENSE.txt` in the
-  root of this repository; the Wiktionary CC BY-SA 4.0 text is in
-  `THIRD_PARTY_WIKTIONARY_LICENSE.txt`.
-- The ~85.5% of example sentences that are template-generated are NOT
+  root of this repository; the Wiktionary/Wikipedia CC BY-SA 4.0 text is
+  in `THIRD_PARTY_WIKTIONARY_LICENSE.txt`.
+- The ~39.3% of example sentences that are template-generated are NOT
   third-party content -- they're produced by this project's own build
-  script from the (third-party) headword + definition, and carry no
-  separate license obligation beyond the data they're built from.
+  script from the (third-party) headword, and carry no separate license
+  obligation beyond the data they're built from.
 
 Per FSF guidance on "mere aggregation," bundling this data alongside
 non-GPL/non-CC application code does not place the application code itself
 under those licenses, since the dictionary is plain data (no executable
 code) distributed unmodified in format alongside the app rather than linked
 into it. If you redistribute `swahili_dictionary.db` itself, the
-Wiktionary-derived content must stay under CC BY-SA 4.0 / GFDL, the Tatoeba
-sentences under CC BY 2.0 FR, and the FreeDict-derived bonus translations
-under GPLv2+, with this attribution preserved.
+Wiktionary/Wikipedia-derived content must stay under CC BY-SA 4.0 / GFDL,
+the Tatoeba sentences under CC BY 2.0 FR, and the FreeDict-derived bonus
+translations under GPLv2+, with this attribution preserved.
 
 ## Data quality note
 
 This is real, independently compiled dictionary data (not AI-generated or
-hand-guessed by this project) for definitions and the 14.5% of real example
-sentences, extracted from a volunteer-edited wiki and an open sentence
+hand-guessed by this project) for definitions and the 59.9% of real example
+sentences, extracted from volunteer-edited wikis and an open sentence
 corpus. It is NOT an institutionally reviewed dictionary like Oxford or
 Cambridge -- coverage is strong for everyday vocabulary but noticeably
 thinner for specialized/technical terms (e.g. specific geography/science
 vocabulary used in this app's reading chapters may not be covered). Some
-entries may be informal, incomplete, or imperfectly glossed. The 85.5% of
-example sentences that are auto-generated are placeholders meant to
-illustrate the word in a sentence frame, not real native usage -- treat the
-whole dictionary as a solid general-purpose reference, not an authoritative
-source for formal writing.
+entries may be informal, incomplete, or imperfectly glossed; Wikipedia-
+sourced example sentences in particular can occasionally still be more
+formal/encyclopedic than ideal despite the length/topic/markup screening
+applied. The 40.1% of example sentences that are auto-generated are
+scenario placeholders meant to illustrate the word being encountered/used,
+not real native usage -- treat the whole dictionary as a solid
+general-purpose reference, not an authoritative source for formal writing.

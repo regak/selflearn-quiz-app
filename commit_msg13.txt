@@ -1,0 +1,39 @@
+Dictionary v2.4: real sentences for 60% of words + QA cleanup
+
+Per feedback: the previous generated fallback copied the definition
+back as a sentence (not a real usage example); revise to use real
+examples where possible, with an improved generated fallback for the
+rest.
+
+Expanded real-sentence coverage from 14.5% to ~60% by adding Swahili
+Wikipedia (sw.wikipedia.org, 131,547 articles, CC BY-SA 4.0) as a
+third real-example source, matched against headwords by whole-word
+(single-word headwords) and substring (multi-word headwords) search,
+screened for sentence length (prefer shorter/simpler) and a basic
+sensitive-topic keyword filter.
+
+Rewrote the generated fallback templates entirely: the old ones
+("Neno X linamaanisha: {definition}.") just restated the definition,
+which isn't a usage example at all. New templates place the headword
+in a plausible classroom/reading/conversation SCENARIO instead (e.g.
+'Mwalimu alitumia neno "{hw}" wakati wa somo la Kiswahili leo.'),
+POS-agnostic so they stay grammatically safe without needing to
+conjugate around the headword.
+
+QA pass after the first Wikipedia-matching build caught 138 spurious
+"real" matches that needed reverting back to generated:
+- 5 were bound-morpheme headwords (e.g. "-kubwa", "-mji", "-zima") --
+  grammatical roots that are never standalone words, so any text
+  "match" for them was an accidental hyphen/punctuation artifact, not
+  genuine usage.
+- 134 still had leftover MediaWiki markup fragments (stray "* *"
+  bullet points, "]]" image-caption remnants) that slipped through the
+  plain-text extraction's cleanup regex.
+
+Final: 9,676 real (59.9%), 6,480 generated (40.1%). Bumped
+PRAGMA user_version to 4 and REQUIRED_SCHEMA_VERSION accordingly so
+existing installs correctly re-copy the updated database.
+
+Updated swahili_dictionary_backup.csv/.xlsx and
+THIRD_PARTY_NOTICES.md / README.md with the corrected methodology and
+counts, including the Wikipedia CC BY-SA 4.0 attribution.

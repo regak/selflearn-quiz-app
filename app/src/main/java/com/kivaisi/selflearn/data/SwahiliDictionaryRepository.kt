@@ -69,17 +69,20 @@ data class DictionaryEntry(
  * and, at ~16,000 rows, comfortably fast either way.)
  *
  * SCHEMA VERSIONING: the bundled DB's `PRAGMA user_version` is bumped
- * whenever a released APK's schema changes (added example columns in
- * schema version 2). [AssetDbOpenHelper.ensureCopied] checks the
- * already-installed copy's user_version against
+ * whenever a released APK's schema or generation logic changes (added
+ * example columns in schema version 2; schema version 3 replaced most
+ * generated examples with real sentences matched from Swahili Wikipedia
+ * and rewrote the remaining generated-template wording so it no longer
+ * just restates the definition). [AssetDbOpenHelper.ensureCopied] checks
+ * the already-installed copy's user_version against
  * [REQUIRED_SCHEMA_VERSION] and re-copies from assets if it's stale --
  * otherwise a user upgrading from an older release would keep their old
  * on-device copy forever (first-run-only copy logic) and crash querying
- * columns that don't exist in it yet.
+ * columns that don't exist in it yet (or silently keep stale content).
  */
 object SwahiliDictionaryRepository {
     private const val DB_ASSET_NAME = "swahili_dictionary.db"
-    private const val REQUIRED_SCHEMA_VERSION = 2
+    private const val REQUIRED_SCHEMA_VERSION = 4
     private const val DEFAULT_LIMIT = 50
     private const val PREVIEW_LIMIT = 60
     private const val COLUMNS = "headword, pos, def_sw, en, example, example_is_generated"
