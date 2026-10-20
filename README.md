@@ -126,6 +126,12 @@ has an example sentence, flagged as either real or auto-generated (see
   accidental punctuation artifact; 134 still had leftover MediaWiki
   markup fragments. Both were reverted to the generated fallback instead
   of being shown as real sentences.
+- **v2.5 note:** 20 hand-drawn vocabulary illustrations added (baba, mama,
+  kitabu, mwalimu, chakula, kula, mti, maji, nyumba, kukimbia, furaha,
+  huzuni, amani, afya ya akili, afya ya mama, afya ya mtandao, afya ya
+  uzazi, afya ya wanyama, agaa, agano jipya). Search results show a small
+  🖼 badge; the Detail screen displays the full illustration above the
+  definition.
 
 A full backup of the word/definition/example/translation data is kept as
 `swahili_dictionary_backup.csv` and `.xlsx` in the repository root, for

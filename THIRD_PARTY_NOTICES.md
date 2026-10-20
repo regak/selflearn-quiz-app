@@ -111,6 +111,15 @@ Wiktionary/Wikipedia-derived content must stay under CC BY-SA 4.0 / GFDL,
 the Tatoeba sentences under CC BY 2.0 FR, and the FreeDict-derived bonus
 translations under GPLv2+, with this attribution preserved.
 
+## Illustrations (v2.5+)
+
+A hand-drawn vocabulary sheet (20 common Swahili words) was photographed
+and processed into individual WebP illustrations by the project. These
+are **original project assets**, not third-party content, and carry no
+separate license restriction. The illustrations are bundled as
+`res/drawable/word_<headword>.webp` and mapped to their dictionary
+entries via the `image_res` column in the SQLite database.
+
 ## Data quality note
 
 This is real, independently compiled dictionary data (not AI-generated or

@@ -20,16 +20,25 @@ import java.io.File
  * have an empty [englishMeaning] and that's expected, not a bug.
  *
  * [example] is ALWAYS populated (100% coverage), but [isExampleGenerated]
- * tells you whether it's REAL usage pulled from a real source (Tatoeba's
- * open sentence corpus or sw.wiktionary.org's own quotation lines -- about
- * 14.5% of entries) or a TEMPLATE-GENERATED placeholder sentence built from
- * the word and its definition (the other ~85.5%, since no free Swahili
- * example-sentence corpus covers the full dictionary). The UI must label
- * generated examples as such -- never present them as authentic usage.
+ * tells you whether it's REAL usage pulled from a real source (Tatoeba,
+ * sw.wiktionary.org's own quotation lines, or Swahili Wikipedia -- about
+ * 60% of entries) or a TEMPLATE-GENERATED scenario sentence (the rest,
+ * since no free Swahili example-sentence corpus covers every headword).
+ * The UI must label generated examples as such -- never present them as
+ * authentic usage.
+ *
+ * [imageResName] is an OPTIONAL bundled illustration for a small, manually
+ * curated set of words (~20, from a hand-drawn vocabulary sheet) -- empty
+ * for the other ~16,136 entries, which is expected, not a bug. When
+ * present, it's the string name of a drawable resource (e.g. "word_baba"),
+ * resolved at runtime via [android.content.res.Resources.getIdentifier]
+ * since a data-driven image reference can't be a compile-time `R.drawable`
+ * constant.
  *
  * This is real third-party dictionary data (sw.wiktionary.org, CC BY-SA
- * 4.0 + GFDL; Tatoeba, CC BY 2.0 FR -- see THIRD_PARTY_NOTICES.md), not
- * content authored for a specific chapter.
+ * 4.0 + GFDL; sw.wikipedia.org, CC BY-SA 4.0 + GFDL; Tatoeba, CC BY 2.0 FR
+ * -- see THIRD_PARTY_NOTICES.md), not content authored for a specific
+ * chapter.
  */
 data class DictionaryEntry(
     val headword: String,
@@ -37,7 +46,8 @@ data class DictionaryEntry(
     val swahiliDefinition: String,
     val englishMeaning: String,
     val example: String,
-    val isExampleGenerated: Boolean
+    val isExampleGenerated: Boolean,
+    val imageResName: String
 )
 
 /**
@@ -73,19 +83,21 @@ data class DictionaryEntry(
  * example columns in schema version 2; schema version 3 replaced most
  * generated examples with real sentences matched from Swahili Wikipedia
  * and rewrote the remaining generated-template wording so it no longer
- * just restates the definition). [AssetDbOpenHelper.ensureCopied] checks
- * the already-installed copy's user_version against
- * [REQUIRED_SCHEMA_VERSION] and re-copies from assets if it's stale --
- * otherwise a user upgrading from an older release would keep their old
- * on-device copy forever (first-run-only copy logic) and crash querying
- * columns that don't exist in it yet (or silently keep stale content).
+ * just restates the definition; schema version 4 was a QA cleanup pass;
+ * schema version 5 added the optional [imageResName] column).
+ * [AssetDbOpenHelper.ensureCopied] checks the already-installed copy's
+ * user_version against [REQUIRED_SCHEMA_VERSION] and re-copies from
+ * assets if it's stale -- otherwise a user upgrading from an older
+ * release would keep their old on-device copy forever (first-run-only
+ * copy logic) and crash querying columns that don't exist in it yet (or
+ * silently keep stale content).
  */
 object SwahiliDictionaryRepository {
     private const val DB_ASSET_NAME = "swahili_dictionary.db"
-    private const val REQUIRED_SCHEMA_VERSION = 4
+    private const val REQUIRED_SCHEMA_VERSION = 5
     private const val DEFAULT_LIMIT = 50
     private const val PREVIEW_LIMIT = 60
-    private const val COLUMNS = "headword, pos, def_sw, en, example, example_is_generated"
+    private const val COLUMNS = "headword, pos, def_sw, en, example, example_is_generated, image_res"
 
     @Volatile
     private var db: SQLiteDatabase? = null
@@ -189,7 +201,8 @@ object SwahiliDictionaryRepository {
         swahiliDefinition = getString(2) ?: "",
         englishMeaning = getString(3) ?: "",
         example = getString(4) ?: "",
-        isExampleGenerated = getInt(5) != 0
+        isExampleGenerated = getInt(5) != 0,
+        imageResName = getString(6) ?: ""
     )
 
     private fun getDb(context: Context): SQLiteDatabase {

@@ -1,5 +1,6 @@
 package com.kivaisi.selflearn.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -287,12 +290,33 @@ private fun DictionaryListRow(entry: DictionaryEntry, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = entry.headword,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF15294F)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = entry.headword,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF15294F)
+                )
+                // Small, non-intrusive signal that this word has a bundled
+                // illustration (like a "has photo" badge in a contacts
+                // list) -- most rows won't show this, so it doesn't change
+                // row height/alignment for the vast majority of entries.
+                if (entry.imageResName.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier.size(14.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(Color(0xFFB07A17)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🖼",
+                            fontSize = 10.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
             if (entry.partOfSpeech.isNotBlank()) {
                 Text(
                     text = entry.partOfSpeech,
@@ -317,6 +341,23 @@ private fun DictionaryListRow(entry: DictionaryEntry, onClick: () -> Unit) {
  */
 @Composable
 private fun DictionaryDetailScreen(entry: DictionaryEntry, onBack: () -> Unit) {
+    val context = LocalContext.current
+    // Data-driven image reference: the DB stores a drawable resource NAME
+    // (e.g. "word_baba") rather than a compile-time R.drawable id, since
+    // the mapping of "which 20 words have a hand-drawn illustration" lives
+    // in data, not code. Resolved once per entry via getIdentifier() and
+    // cached with remember -- this reflection-based lookup is more costly
+    // than a direct R.drawable reference, but it only ever runs once per
+    // Detail-screen visit (never in a search/scroll hot path), so the cost
+    // is negligible here.
+    val imageResId = remember(entry.imageResName) {
+        if (entry.imageResName.isBlank()) {
+            0
+        } else {
+            context.resources.getIdentifier(entry.imageResName, "drawable", context.packageName)
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
@@ -366,6 +407,18 @@ private fun DictionaryDetailScreen(entry: DictionaryEntry, onBack: () -> Unit) {
                         color = Color.Gray,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                if (imageResId != 0) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Image(
+                        painter = painterResource(id = imageResId),
+                        contentDescription = "Illustration of ${entry.headword}",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(12.dp))
                     )
                 }
                 Spacer(modifier = Modifier.height(20.dp))
